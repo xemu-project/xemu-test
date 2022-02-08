@@ -74,7 +74,7 @@ class Test:
 	def mount_hdd(self):
 		_l.info('Mounting HDD image')
 		os.makedirs(self.mount_path, exist_ok=True)
-		subprocess.run(f'fatxfs {self.hdd_path} {self.mount_path}'.split(), check=True)
+		subprocess.run(f'python3 -m pyfatx -x {self.hdd_path}'.split(), check=True, cwd=self.mount_path)
 
 	def copy_results(self):
 		_l.info('Copying test results...')
@@ -82,7 +82,7 @@ class Test:
 
 	def unmount_hdd(self):
 		_l.info('Unmounting HDD image')
-		subprocess.run(f'fusermount -u {self.mount_path}'.split())
+		# Nothing to do
 
 	def analyze_results(self):
 		with open(os.path.join(self.results_out_path, 'results.txt')) as f:

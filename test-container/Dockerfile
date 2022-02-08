@@ -1,26 +1,25 @@
 FROM ubuntu:20.04
 RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -qy fuse build-essential pkg-config libfuse-dev cmake git
-RUN mkdir -p /usr/src \
- && git clone https://github.com/mborgerson/fatx.git /usr/src/fatx
-WORKDIR /usr/src/fatx
-RUN mkdir build \
- && cd build \
- && cmake .. \
- && make DESTDIR=/fatx install
+ && DEBIAN_FRONTEND=noninteractive \
+    apt-get install -qy \
+        build-essential cmake git python3-pip
+RUN git clone --depth=1 https://github.com/mborgerson/fatx \
+ && cd fatx \
+ && mkdir -p /whl \
+ && python3 -m pip wheel -w /whl .
 
 FROM ubuntu:20.04
 RUN set -xe; \
     apt-get -qy update \
     && DEBIAN_FRONTEND=noninteractive \
     apt-get -qy install \
+        python3-pip \
         xvfb \
         x11-utils \
         x11vnc \
         xinit \
         ffmpeg \
         i3 \
-        fuse \
         qemu-utils \
         libc6 \
         libepoxy0 \
@@ -38,8 +37,8 @@ RUN set -xe; \
         cpu-checker \
         ;
 
-COPY --from=0 /fatx /fatx
-RUN cp -ruT /fatx / && rm -rf /fatx
+COPY --from=0 /whl /whl
+RUN python3 -m pip install --find-links /whl /whl/pyfatx-*.whl
 
 ENV SDL_AUDIODRIVER=disk
 ENV SDL_DISKAUDIOFILE=/dev/null

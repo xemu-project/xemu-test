@@ -30,7 +30,6 @@ docker pull ghcr.io/mborgerson/xemu-test:master
 echo "[*] Running tests"
 rm -rf results
 mkdir results
-docker run --rm -p 5900:5900 -v $PWD:/work -w /work --device /dev/fuse \
-           --privileged \
+docker run --rm -p 5900:5900 -v $PWD:/work -w /work \
            ghcr.io/mborgerson/xemu-test:master \
            python3 test_main.py 2>&1 | tee results/log.txt
