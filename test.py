@@ -11,13 +11,21 @@ logging.basicConfig(level=logging.INFO)
 _l = logging.getLogger(__file__)
 
 class Test:
+	"""
+	Test provides a basic framework that:
+	- Starts FFMPEG to record footage of xemu while it runs
+	- Launches xemu with an test XBE loaded from a disc image
+	- Waits for xemu to shutdown or timeout
+	- Inspect the filesystem for test results
+	"""
+
 	def __init__(self):
 		self.flash_path         = '/work/private/bios.bin'
 		self.mcpx_path          = '/work/private/mcpx.bin'
 		self.blank_hdd_path     = '/work/xbox_hdd.qcow2'
 		self.hdd_path           = '/tmp/test.img'
 		self.mount_path         = '/tmp/xemu-hdd-mount'
-		self.iso_path           = '/work/test-xbe/tester.iso'
+		self.iso_path           = '/work/tester.iso'
 		self.results_in_path    = os.path.join(self.mount_path, 'results')
 		self.results_out_path   = '/work/results'
 		self.video_capture_path = os.path.join(self.results_out_path, 'capture.mp4')
@@ -25,10 +33,11 @@ class Test:
 
 	def prepare_roms(self):
 		_l.info('Preparing ROM images')
-		# TODO
+		# Nothing to do here yet
 
 	def prepare_hdd(self):
 		_l.info('Preparing HDD image')
+		# FIXME: Replace qcow2 with pyfatx disk init
 		subprocess.run(f'qemu-img convert {self.blank_hdd_path} {self.hdd_path}'.split(), check=True)
 
 	def prepare_config(self):
@@ -67,9 +76,8 @@ class Test:
 	def launch_xemu(self):
 		_l.info('Launching xemu...')
 		c = (f'timeout {self.timeout} '
-			 f'xemu -config_path ./xemu.ini -dvd_path {self.iso_path} '
-			 '-full-screen')
-		subprocess.run(c.split())
+			 f'xemu -config_path ./xemu.ini -dvd_path {self.iso_path} -full-screen')
+		subprocess.run(c.split(), check=True)
 
 	def mount_hdd(self):
 		_l.info('Mounting HDD image')
@@ -102,8 +110,17 @@ class Test:
 		self.analyze_results()
 
 def main():
-	test = Test()
-	test.run()
+	result = True
+	tests = [Test]
+	for test_cls in tests:
+		try:
+			test_cls().run()
+			print('Test passed!')
+		except:
+			_l.exception('Test failed!')
+			result = False
+
+	exit(0 if result else 1)
 
 if __name__ == '__main__':
 	main()

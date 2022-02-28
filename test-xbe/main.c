@@ -1,4 +1,5 @@
 #include <hal/debug.h>
+
 #include <hal/video.h>
 #include <windows.h>
 #include <nxdk/mount.h>
@@ -9,7 +10,10 @@ int main(void)
 {
     XVideoSetMode(640, 480, 32, REFRESH_DEFAULT);
 
-    debugPrint("Hello nxdk!\n");
+    for (int i = 0; i < 10; i++) {
+        debugPrint("Hello nxdk!\n");
+        Sleep(500);
+    }
 
     BOOL ret = nxMountDrive('C', "\\Device\\Harddisk0\\Partition2\\");
     if (!ret) {
@@ -27,6 +31,7 @@ int main(void)
     const char *buf = "Success";
     fwrite(buf, strlen(buf), 1, f);
     fclose(f);
+
 
 shutdown:
     HalInitiateShutdown();
