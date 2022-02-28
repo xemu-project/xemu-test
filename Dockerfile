@@ -54,7 +54,7 @@ RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
 #
 # Build final test container
 #
-FROM run-container-base
+FROM run-container-base AS test-container
 
 RUN useradd -ms /bin/bash user
 
