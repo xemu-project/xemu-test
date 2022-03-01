@@ -2,7 +2,15 @@ xemu Automated Testing
 ======================
 
 Performs a suite of tests against a build of xemu, capturing test results and
-footage of the runs. Primarily used for CI testing of xemu.
+footage of the runs. Currently that suite consists of 1 test: boot to a custom
+executable that writes a file to the disk. This is a useful test, but
+there are many tests left to add, and you can help! Pull requests welcome.
+
+This is primarily used for automated testing of xemu pull requests. The xemu CI
+system uses this repository for testing. The goal is to have a large set of
+tests that can exercise xemu across a varienty of different platforms/hardware
+configurations for every change made to xemu. See GitHub Issues on this
+repository for list of areas that need attention.
 
 Containerized Testing
 ---------------------
@@ -41,3 +49,10 @@ xemu is running headless when in the container, so if you need to interact with
 it you can connect to the container VNC server with:
 
 	xtightvncviewer 127.0.0.1
+
+Native Testing
+--------------
+Containers are a great solution generally, but they aren't available on every
+platform that xemu runs on. The tester can be run outside of a container,
+provided you have set up the environment correctly. It is a goal for this project
+to support running the tests natively on all platforms.
