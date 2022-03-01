@@ -19,10 +19,12 @@ chmod +x ~/.xinitrc
 mkdir -p ~/.config/i3
 cat <<EOF >>~/.config/i3/config
 border none
+bar {
+}
 EOF
 
 echo "[*] Starting Xvfb"
-xinit -- /usr/bin/Xvfb $DISPLAY -ac -screen 0 "$XVFB_WHD" -nolisten tcp +extension GLX +render -noreset & 1>/dev/null 2>&1 &
+xinit -- /usr/bin/Xvfb $DISPLAY -ac -screen 0 "$XVFB_WHD" -nolisten tcp +extension GLX +render -noreset 1>/dev/null 2>&1 &
 Xvfb_pid="$!"
 echo "[~] Waiting for Xvfb (PID: $Xvfb_pid) to be ready..."
 set +e
