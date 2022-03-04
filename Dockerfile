@@ -52,7 +52,7 @@ RUN mkdir /work
 WORKDIR /work
 COPY scripts/docker_entry.sh /docker_entry.sh
 COPY . /work/xemu-test
-COPY --from=data /data /work/xemu-test/xemutest/
+COPY --from=data /data /work/xemu-test/xemutest/data
 RUN pip install /work/xemu-test
 ENTRYPOINT ["/docker_entry.sh"]
 CMD ["/usr/bin/python3", "-m", "xemutest", "/work/private", "/work/results"]
