@@ -1,4 +1,13 @@
 #
+# Build test data
+#
+FROM ghcr.io/xboxdev/nxdk AS data
+RUN mkdir /data
+COPY test-xbe /test-xbe
+RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
+RUN cp /test-xbe/tester.iso /data
+
+#
 # Build base test container image
 #
 FROM ubuntu:20.04 as run-container-base
@@ -30,50 +39,20 @@ RUN set -xe; \
         ;
 
 #
-# Build pyfatx for HDD management
-#
-FROM ubuntu:20.04 AS pyfatx
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
- && apt-get install -qy \
-     build-essential \
-     cmake \
-     git \
-     python3-pip
-RUN git clone --depth=1 https://github.com/mborgerson/fatx \
- && mkdir -p /whl \
- && python3 -m pip wheel -w /whl ./fatx
-
-#
-# Build test ISO
-#
-FROM ghcr.io/xboxdev/nxdk AS test-iso-1
-COPY test-xbe /test-xbe
-RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
-
-#
 # Build final test container
 #
 FROM run-container-base AS test-container
-
-RUN useradd -ms /bin/bash user
-
-COPY --from=pyfatx /whl /whl
-RUN python3 -m pip install --find-links /whl /whl/pyfatx-*.whl
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SDL_AUDIODRIVER=dummy
 
 # VNC port for debugging
 EXPOSE 5900
 
-COPY docker_entry.sh /docker_entry.sh
-ENTRYPOINT ["/docker_entry.sh"]
-
 RUN mkdir /work
-COPY test.py /work/test.py
-COPY xbox_hdd.qcow2 /work/xbox_hdd.qcow2
-COPY --from=test-iso-1 /test-xbe/tester.iso /work/tester.iso
-
 WORKDIR /work
-CMD ["/usr/bin/python3", "/work/test.py"]
+COPY scripts/docker_entry.sh /docker_entry.sh
+COPY . /work/xemu-test
+COPY --from=data /data /work/xemu-test/xemutest/
+RUN pip install /work/xemu-test
+ENTRYPOINT ["/docker_entry.sh"]
+CMD ["/usr/bin/python3", "-m", "xemutest", "/work/private", "/work/results"]
