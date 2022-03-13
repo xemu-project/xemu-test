@@ -89,10 +89,9 @@ class Test:
 	def launch_video_capture(self):
 		log.info('Launching FFMPEG (capturing to %s)', self.video_capture_path)
 		if platform.system() == 'Windows':
-			# FIXME: Assuming nvenc available on host. Add check for this.
 			c = ['ffmpeg.exe', '-loglevel', 'error', '-framerate', '60',
 				'-video_size', f'{self.record_w}x{self.record_h}', '-f', 'gdigrab', '-offset_x', f'{self.record_x}', '-offset_y', f'{self.record_y}', '-i', 'desktop',
-				'-c:v', 'h264_nvenc', '-pix_fmt', 'yuv420p',
+				'-c:v', 'libx264', '-pix_fmt', 'yuv420p',
 				self.video_capture_path, '-y']
 		else:
 			c = ['ffmpeg', '-loglevel', 'error',
