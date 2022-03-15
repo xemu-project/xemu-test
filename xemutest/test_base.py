@@ -20,6 +20,33 @@ if platform.system() == 'Windows':
 log = logging.getLogger(__file__)
 
 
+class TestEnvironment:
+	"""Encapsulates environment information needed to run the tests."""
+	def __init__(
+			self,
+			private_path: str,
+			xemu_path: Optional[str],
+			ffmpeg_path: Optional[str],
+			disable_fullscreen: bool = False):
+		self.private_path = private_path
+
+		cur_dir = os.getcwd()
+		if not xemu_path:
+			if platform.system() == 'Windows':
+				self.xemu_path = os.path.join(cur_dir, 'xemu.exe')
+			else:
+				self.xemu_path = 'xemu'
+		else:
+			self.xemu_path = xemu_path
+
+		self.ffmpeg_path = ffmpeg_path
+		self.disable_fullscreen = disable_fullscreen
+
+	@property
+	def video_capture_enabled(self) -> bool:
+		return self.ffmpeg_path != "DISABLE"
+
+
 class TestBase:
 	"""
 	Provides a basic framework that:
@@ -31,19 +58,11 @@ class TestBase:
 	Tester runs in current working directory and will generate some working files.
 	"""
 
-	def __init__(self, private_path: str, results_path: str, iso_path: str, xemu_path: Optional[str]):
+	def __init__(self, test_env: TestEnvironment, results_path: str, iso_path: str):
 		cur_dir = os.getcwd()
 
-		if not xemu_path:
-			if platform.system() == 'Windows':
-				self.xemu_path = os.path.join(cur_dir, 'xemu.exe')
-			else:
-				self.xemu_path = 'xemu'
-		else:
-			self.xemu_path = xemu_path
-
-		self.flash_path         = os.path.join(private_path, 'bios.bin')
-		self.mcpx_path          = os.path.join(private_path, 'mcpx.bin')
+		self.flash_path         = os.path.join(test_env.private_path, 'bios.bin')
+		self.mcpx_path          = os.path.join(test_env.private_path, 'mcpx.bin')
 		self.hdd_path           = os.path.join(cur_dir, 'test.img')
 		self.mount_path         = os.path.join(cur_dir, 'xemu-hdd-mount')
 		self.iso_path           = iso_path
@@ -51,6 +70,7 @@ class TestBase:
 		self.results_out_path   = results_path
 		self.video_capture_path = os.path.join(self.results_out_path, 'capture.mp4')
 		self.timeout            = 60
+		self.test_env           = test_env
 
 		if platform.system() == 'Windows':
 			self.app: Optional[pywinauto.application.Application] = None
@@ -87,20 +107,29 @@ class TestBase:
 			f.write(config)
 
 	def launch_video_capture(self):
+		if not self.test_env.video_capture_enabled:
+			return
+		ffmpeg_path = self.test_env.ffmpeg_path
 		log.info('Launching FFMPEG (capturing to %s)', self.video_capture_path)
 		if platform.system() == 'Windows':
-			c = ['ffmpeg.exe', '-loglevel', 'error', '-framerate', '60',
+			if not ffmpeg_path:
+				ffmpeg_path = 'ffmpeg.exe'
+			c = [ffmpeg_path, '-loglevel', 'error', '-framerate', '60',
 				'-video_size', f'{self.record_w}x{self.record_h}', '-f', 'gdigrab', '-offset_x', f'{self.record_x}', '-offset_y', f'{self.record_y}', '-i', 'desktop',
 				'-c:v', 'libx264', '-pix_fmt', 'yuv420p',
 				self.video_capture_path, '-y']
 		else:
-			c = ['ffmpeg', '-loglevel', 'error',
+			if not ffmpeg_path:
+				ffmpeg_path = 'ffmpeg'
+			c = [ffmpeg_path, '-loglevel', 'error',
 				 '-video_size', '640x480', '-f', 'x11grab', '-i', os.getenv("DISPLAY"),
 				 '-c:v', 'libx264', '-preset', 'fast', '-profile:v', 'baseline', '-pix_fmt', 'yuv420p',
 				 self.video_capture_path, '-y']
 		self.ffmpeg = subprocess.Popen(c, stdin=subprocess.PIPE)
 
 	def terminate_video_capture(self):
+		if not self.test_env.video_capture_enabled:
+			return
 		log.info('Shutting down FFMPEG')
 		self.ffmpeg.communicate(b'q\n', timeout=5)
 
@@ -108,9 +137,11 @@ class TestBase:
 		log.info('Launching xemu...')
 
 		if platform.system() == 'Windows':
-			c = [self.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
+			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
 		else:
-			c = [self.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path, '-full-screen']
+			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
+			if  not self.test_env.disable_fullscreen:
+				c.append('-full-screen')
 		start = time.time()
 		xemu = subprocess.Popen(c)
 
