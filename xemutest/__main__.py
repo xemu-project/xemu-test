@@ -19,6 +19,7 @@ def main():
 	ap.add_argument('--xemu', help='Path to the xemu binary')
 	ap.add_argument('--ffmpeg', help='Path to the ffmpeg binary or DISABLE')
 	ap.add_argument('--no-fullscreen', action='store_true', help='Force xemu to run in a window')
+	ap.add_argument('--perceptualdiff', help='Path to the perceptualdiff binary or DISABLE')
 	args = ap.parse_args()
 
 	tests = []
@@ -49,6 +50,7 @@ def main():
 		os.path.abspath(os.path.expanduser(args.private)),
 		args.xemu,
 		args.ffmpeg,
+		args.perceptualdiff,
 		args.no_fullscreen)
 
 	for i, (test_name, test_cls) in enumerate(tests):

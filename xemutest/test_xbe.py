@@ -1,7 +1,6 @@
 """Test harness for test-xbe."""
 
 import os
-from typing import Optional
 
 import test_base
 
@@ -14,7 +13,7 @@ class TestXBE(test_base.TestBase):
             raise FileNotFoundError('Test data was not installed with the package. You need to build it and copy '
                                     f'to {test_data_path}.')
 
-        super().__init__(test_env, results_path, iso_path)
+        super().__init__(test_env, 'results', results_path, iso_path)
 
     def analyze_results(self):
         with open(os.path.join(self.results_out_path, 'results.txt')) as f:

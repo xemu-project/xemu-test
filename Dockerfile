@@ -9,6 +9,35 @@ RUN mkdir /data/TestXBE
 RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
 RUN cp /test-xbe/tester.iso /data/TestXBE/
 
+# The nxdk_pgraph_tests includes its own copy of the nxdk which needs more build
+# infrastructure than the nxdk-runbase used for other tests.
+FROM ubuntu:20.04 AS pgraph-buildbase
+ENV DEBIAN_FRONTEND noninteractive
+RUN set -xe; \
+    apt-get -qy update \
+    && apt-get -qy install \
+        bison \
+        clang \
+        cmake \
+        flex \
+        lld \
+        llvm \
+        make
+
+FROM pgraph-buildbase AS pgraph-data
+RUN mkdir -p /data/TestNXDKPgraphTests
+COPY test-pgraph /test-pgraph
+RUN make -C /test-pgraph/nxdk_pgraph_tests \
+    AUTORUN_IMMEDIATELY=y \
+    ENABLE_SHUTDOWN=y \
+    FALLBACK_OUTPUT_ROOT_PATH="c:" \
+    RUNTIME_CONFIG_PATH="c:/pgraph_tests.cnf" \
+    CC=clang CXX=clang++ \
+    -j$(numproc)
+RUN cp /test-pgraph/nxdk_pgraph_tests/nxdk_pgraph_tests.iso /data/TestNXDKPgraphTests/
+RUN cp /test-pgraph/config.cnf /data/TestNXDKPgraphTests/
+
+
 #
 # Build base test container image
 #
@@ -37,6 +66,7 @@ RUN set -xe; \
         libsdl2-2.0-0 \
         libssl1.1 \
         libstdc++6 \
+        perceptualdiff \
         zlib1g \
         ;
 
@@ -53,8 +83,11 @@ EXPOSE 5900
 RUN mkdir /work
 WORKDIR /work
 COPY scripts/docker_entry.sh /docker_entry.sh
-COPY . /work/xemu-test
+COPY ./scripts /work/xemu-test/scripts/
+COPY ./xemutest /work/xemu-test/xemutest/
+COPY ./setup.py /work/xemu-test
 COPY --from=data /data /work/xemu-test/xemutest/data
+COPY --from=pgraph-data /data/TestNXDKPgraphTests /work/xemu-test/xemutest/data/TestNXDKPgraphTests
 RUN pip install /work/xemu-test
 ENTRYPOINT ["/docker_entry.sh"]
 CMD ["/usr/bin/python3", "-m", "xemutest", "/work/private", "/work/results"]
