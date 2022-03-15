@@ -3,9 +3,11 @@
 #
 FROM ghcr.io/xboxdev/nxdk AS data
 RUN mkdir /data
+
 COPY test-xbe /test-xbe
+RUN mkdir /data/TestXBE
 RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
-RUN cp /test-xbe/tester.iso /data
+RUN cp /test-xbe/tester.iso /data/TestXBE/
 
 #
 # Build base test container image
