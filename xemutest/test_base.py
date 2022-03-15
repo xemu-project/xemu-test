@@ -8,8 +8,9 @@ import signal
 import time
 import platform
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
+import pyfatx
 from pyfatx import Fatx
 
 
@@ -27,6 +28,7 @@ class TestEnvironment:
 			private_path: str,
 			xemu_path: Optional[str],
 			ffmpeg_path: Optional[str],
+			perceptualdiff_path: Optional[str],
 			disable_fullscreen: bool = False):
 		self.private_path = private_path
 
@@ -40,11 +42,16 @@ class TestEnvironment:
 			self.xemu_path = xemu_path
 
 		self.ffmpeg_path = ffmpeg_path
+		self.perceptualdiff_path = perceptualdiff_path
 		self.disable_fullscreen = disable_fullscreen
 
 	@property
 	def video_capture_enabled(self) -> bool:
 		return self.ffmpeg_path != "DISABLE"
+
+	@property
+	def perceptualdiff_enabled(self) -> bool:
+		return self.perceptualdiff_path != "DISABLE"
 
 
 class TestBase:
@@ -58,7 +65,13 @@ class TestBase:
 	Tester runs in current working directory and will generate some working files.
 	"""
 
-	def __init__(self, test_env: TestEnvironment, results_path: str, iso_path: str):
+	def __init__(
+			self,
+			test_env: TestEnvironment,
+			xbox_results_path: str,
+			results_out_path: str,
+			iso_path: str,
+			timeout: int = 60):
 		cur_dir = os.getcwd()
 
 		self.flash_path         = os.path.join(test_env.private_path, 'bios.bin')
@@ -66,10 +79,10 @@ class TestBase:
 		self.hdd_path           = os.path.join(cur_dir, 'test.img')
 		self.mount_path         = os.path.join(cur_dir, 'xemu-hdd-mount')
 		self.iso_path           = iso_path
-		self.results_in_path    = os.path.join(self.mount_path, 'results')
-		self.results_out_path   = results_path
+		self.results_in_path    = os.path.join(self.mount_path, xbox_results_path)
+		self.results_out_path   = results_out_path
 		self.video_capture_path = os.path.join(self.results_out_path, 'capture.mp4')
-		self.timeout            = 60
+		self.timeout            = timeout
 		self.test_env           = test_env
 		self.ffmpeg             = None
 
@@ -80,11 +93,13 @@ class TestBase:
 			self.record_w: int = 0
 			self.record_h: int = 0
 
-	def prepare_roms(self):
+		shutil.rmtree(results_out_path, True)
+
+	def _prepare_roms(self):
 		log.info('Preparing ROM images')
 		# Nothing to do here yet
 
-	def prepare_hdd(self):
+	def _prepare_hdd(self):
 		log.info('Preparing HDD image')
 		disk_size = 8*1024*1024*1024
 		if os.path.exists(self.hdd_path):
@@ -94,7 +109,9 @@ class TestBase:
 		else:
 			Fatx.create(self.hdd_path, disk_size)
 
-	def prepare_config(self):
+		self.setup_hdd_files(Fatx(self.hdd_path))
+
+	def _prepare_config(self):
 		config = ( '[system]\n'
                   f'flash_path = {self.flash_path}\n'
                   f'bootrom_path = {self.mcpx_path}\n'
@@ -107,7 +124,7 @@ class TestBase:
 		with open('xemu.ini', 'w') as f:
 			f.write(config)
 
-	def launch_video_capture(self):
+	def _launch_video_capture(self):
 		if not self.test_env.video_capture_enabled:
 			return
 		ffmpeg_path = self.test_env.ffmpeg_path
@@ -132,13 +149,13 @@ class TestBase:
 		log.info('Launching FFMPEG (capturing to %s) with %s', self.video_capture_path, repr(c))
 		self.ffmpeg = subprocess.Popen(c, stdin=subprocess.PIPE)
 
-	def terminate_video_capture(self):
+	def _terminate_video_capture(self):
 		if not self.test_env.video_capture_enabled or self.ffmpeg is None:
 			return
 		log.info('Shutting down FFMPEG')
 		self.ffmpeg.communicate(b'q\n', timeout=5)
 
-	def launch_xemu(self):
+	def _launch_xemu(self):
 
 		if platform.system() == 'Windows':
 			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
@@ -180,7 +197,7 @@ class TestBase:
 				log.exception('Failed to connect to xemu window')
 				self.app = None
 
-		self.launch_video_capture()
+		self._launch_video_capture()
 
 		while True:
 			status = xemu.poll()
@@ -195,9 +212,9 @@ class TestBase:
 				break
 			time.sleep(1)
 
-		self.terminate_video_capture()
+		self._terminate_video_capture()
 
-	def mount_hdd(self):
+	def _mount_hdd(self):
 		log.info('Mounting HDD image')
 		if os.path.exists(self.mount_path):
 			shutil.rmtree(self.mount_path)
@@ -206,13 +223,38 @@ class TestBase:
 		# FIXME: Don't need to run here
 		subprocess.run([sys.executable, '-m', 'pyfatx', '-x', self.hdd_path], check=True, cwd=self.mount_path)
 
-	def copy_results(self):
+	def _copy_results(self):
 		log.info('Copying test results...')
 		shutil.copytree(self.results_in_path, self.results_out_path, dirs_exist_ok=True)
 
-	def unmount_hdd(self):
+	def _unmount_hdd(self):
 		log.info('Unmounting HDD image')
 		# Nothing to do
+
+	def compare_images(self, expected_path: str, actual_path: str, diff_result_path: Optional[str] = None) -> Tuple[bool, str]:
+		"""Perform a perceptual diff of the given images."""
+		if not self.test_env.perceptualdiff_enabled:
+			return True, ''
+
+		perceptualdiff_path = self.test_env.perceptualdiff_path
+		if not perceptualdiff_path:
+			if platform.system() == 'Windows':
+				perceptualdiff_path = 'perceptualdiff.exe'
+			else:
+				perceptualdiff_path = 'perceptualdiff'
+
+		c = [perceptualdiff_path, expected_path, actual_path, '--verbose']
+		if diff_result_path:
+			c.extend(['--output', diff_result_path])
+		result = subprocess.run(c, capture_output=True)
+		return result.returncode == 0, result.stderr.decode('utf-8')
+
+	def setup_hdd_files(self, fs: Fatx):
+		"""Configure any files on the hard disk that are needed for the test.
+
+		This method may be implemented by the subclass.
+		"""
+		del fs
 
 	def analyze_results(self):
 		"""Validate any files retrieved from the HDD.
@@ -221,13 +263,23 @@ class TestBase:
 		"""
 		pass
 
+	def teardown_hdd_files(self, fs: Fatx):
+		"""Clean up any files on the hard disk that should not outlive the test.
+
+		This method may be implemented by the subclass.
+		"""
+		del fs
+
 	def run(self):
 		os.makedirs(self.results_out_path, exist_ok=True)
-		self.prepare_roms()
-		self.prepare_hdd()
-		self.prepare_config()
-		self.launch_xemu()
-		self.mount_hdd()
-		self.copy_results()
-		self.unmount_hdd()
-		self.analyze_results()
+		self._prepare_roms()
+		self._prepare_hdd()
+		self._prepare_config()
+		self._launch_xemu()
+		self._mount_hdd()
+		self._copy_results()
+		self._unmount_hdd()
+		try:
+			self.analyze_results()
+		finally:
+			self.teardown_hdd_files(Fatx(self.hdd_path))

@@ -2,9 +2,8 @@ xemu Automated Testing
 ======================
 
 Performs a suite of tests against a build of xemu, capturing test results and
-footage of the runs. Currently that suite consists of 1 test: boot to a custom
-executable that writes a file to the disk. This is a useful test, but
-there are many tests left to add, and you can help! Pull requests welcome.
+footage of the runs. There are many tests left to add, and you can help! Pull requests
+welcome.
 
 This is primarily used for automated testing of xemu pull requests. The xemu CI
 system uses this repository for testing. The goal is to have a large set of

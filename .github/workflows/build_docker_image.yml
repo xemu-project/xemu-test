@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Clone Tree
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Extract image metadata (tags, labels)
         id: meta
@@ -51,6 +53,8 @@ jobs:
 
       - name: Clone Tree
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Build Test Data
         run: bash ./scripts/build_test_data.sh

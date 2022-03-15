@@ -15,7 +15,7 @@ setup(name='xemutest',
     include_package_data=True,
     package_data={'xemutest': ['data/**/*']},
     install_requires=[
-        'pyfatx',
+        'pyfatx >= 0.0.6',
         'pywinauto; sys_platform == "win32"'
         ],
     python_requires='>=3.6'
