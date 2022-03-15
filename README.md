@@ -56,3 +56,6 @@ Containers are a great solution generally, but they aren't available on every
 platform that xemu runs on. The tester can be run outside of a container,
 provided you have set up the environment correctly. It is a goal for this project
 to support running the tests natively on all platforms.
+
+See `xemutest/__main__.py` for a description of arguments that may be used to
+customize native behavior.

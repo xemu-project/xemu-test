@@ -20,9 +20,9 @@ if platform.system() == 'Windows':
 log = logging.getLogger(__file__)
 
 
-class Test:
+class TestBase:
 	"""
-	Test provides a basic framework that:
+	Provides a basic framework that:
 	- Starts FFMPEG to record footage of xemu while it runs
 	- Launches xemu with an test XBE loaded from a disc image
 	- Waits for xemu to shutdown or timeout
@@ -31,22 +31,22 @@ class Test:
 	Tester runs in current working directory and will generate some working files.
 	"""
 
-	def __init__(self, private_path: str, results_path: str):
+	def __init__(self, private_path: str, results_path: str, iso_path: str, xemu_path: Optional[str]):
 		cur_dir = os.getcwd()
-		if platform.system() == 'Windows':
-			self.xemu_path = os.path.join(cur_dir, 'xemu.exe')
-		else:
-			self.xemu_path = 'xemu'
 
-		test_data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
-		if not os.path.isdir(test_data_path):
-			raise FileNotFoundError('Test data was not installed with the package. You need to build it.')
+		if not xemu_path:
+			if platform.system() == 'Windows':
+				self.xemu_path = os.path.join(cur_dir, 'xemu.exe')
+			else:
+				self.xemu_path = 'xemu'
+		else:
+			self.xemu_path = xemu_path
 
 		self.flash_path         = os.path.join(private_path, 'bios.bin')
 		self.mcpx_path          = os.path.join(private_path, 'mcpx.bin')
 		self.hdd_path           = os.path.join(cur_dir, 'test.img')
 		self.mount_path         = os.path.join(cur_dir, 'xemu-hdd-mount')
-		self.iso_path           = os.path.join(test_data_path, 'tester.iso')
+		self.iso_path           = iso_path
 		self.results_in_path    = os.path.join(self.mount_path, 'results')
 		self.results_out_path   = results_path
 		self.video_capture_path = os.path.join(self.results_out_path, 'capture.mp4')
@@ -175,8 +175,11 @@ class Test:
 		# Nothing to do
 
 	def analyze_results(self):
-		with open(os.path.join(self.results_out_path, 'results.txt')) as f:
-			assert(f.read().strip() == 'Success')
+		"""Validate any files retrieved from the HDD.
+
+		This method should be implemented by the subclass to confirm that the output of the test matches expectations.
+		"""
+		pass
 
 	def run(self):
 		os.makedirs(self.results_out_path, exist_ok=True)
