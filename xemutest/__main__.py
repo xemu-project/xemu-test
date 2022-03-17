@@ -3,6 +3,7 @@ import importlib
 import inspect
 import logging
 import os
+import sys
 
 import xemutest
 
@@ -22,6 +23,8 @@ def main():
 
 	tests = []
 	result = True
+
+	sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 	for path in os.listdir(os.path.dirname(__file__)):
 		if not path.startswith("test_") or path == "test_base.py":
 			continue
