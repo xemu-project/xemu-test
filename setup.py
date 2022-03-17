@@ -13,7 +13,7 @@ setup(name='xemutest',
     url='https://github.com/mborgerson/xemu-test',
     packages=['xemutest'],
     include_package_data=True,
-    package_data={'xemutest': ['data/*']},
+    package_data={'xemutest': ['data/**/*']},
     install_requires=[
         'pyfatx',
         'pywinauto; sys_platform == "win32"'
