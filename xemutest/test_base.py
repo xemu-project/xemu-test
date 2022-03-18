@@ -71,6 +71,7 @@ class TestBase:
 		self.video_capture_path = os.path.join(self.results_out_path, 'capture.mp4')
 		self.timeout            = 60
 		self.test_env           = test_env
+		self.ffmpeg             = None
 
 		if platform.system() == 'Windows':
 			self.app: Optional[pywinauto.application.Application] = None
@@ -110,8 +111,10 @@ class TestBase:
 		if not self.test_env.video_capture_enabled:
 			return
 		ffmpeg_path = self.test_env.ffmpeg_path
-		log.info('Launching FFMPEG (capturing to %s)', self.video_capture_path)
 		if platform.system() == 'Windows':
+			if self.app is None:
+				log.info('Video capture disabled because app window could not be found')
+				return
 			if not ffmpeg_path:
 				ffmpeg_path = 'ffmpeg.exe'
 			c = [ffmpeg_path, '-loglevel', 'error', '-framerate', '60',
@@ -125,16 +128,17 @@ class TestBase:
 				 '-video_size', '640x480', '-f', 'x11grab', '-i', os.getenv("DISPLAY"),
 				 '-c:v', 'libx264', '-preset', 'fast', '-profile:v', 'baseline', '-pix_fmt', 'yuv420p',
 				 self.video_capture_path, '-y']
+
+		log.info('Launching FFMPEG (capturing to %s) with %s', self.video_capture_path, repr(c))
 		self.ffmpeg = subprocess.Popen(c, stdin=subprocess.PIPE)
 
 	def terminate_video_capture(self):
-		if not self.test_env.video_capture_enabled:
+		if not self.test_env.video_capture_enabled or self.ffmpeg is None:
 			return
 		log.info('Shutting down FFMPEG')
 		self.ffmpeg.communicate(b'q\n', timeout=5)
 
 	def launch_xemu(self):
-		log.info('Launching xemu...')
 
 		if platform.system() == 'Windows':
 			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
@@ -142,34 +146,39 @@ class TestBase:
 			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
 			if  not self.test_env.disable_fullscreen:
 				c.append('-full-screen')
+		log.info('Launching xemu with command %s from directory %s', repr(c), os.getcwd())
 		start = time.time()
 		xemu = subprocess.Popen(c)
 
 		if platform.system() == 'Windows':
-			self.app = pywinauto.application.Application()
-			self.app.connect(process=xemu.pid)
-			main_window = self.app.window(title_re=r'^xemu \| v.+')
-			if main_window is None:
-				raise Exception('Failed to find main xemu window...')
+			try:
+				self.app = pywinauto.application.Application()
+				self.app.connect(process=xemu.pid)
+				main_window = self.app.window(title_re=r'^xemu \| v.+')
+				if main_window is None:
+					raise Exception('Failed to find main xemu window...')
 
-			target_width = 640
-			target_height = 480
+				target_width = 640
+				target_height = 480
 
-			rect = main_window.client_area_rect()
-			cx, cy, cw, ch = rect.left, rect.top, rect.width(), rect.height()
-			rect = main_window.rectangle()
-			x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
+				rect = main_window.client_area_rect()
+				cx, cy, cw, ch = rect.left, rect.top, rect.width(), rect.height()
+				rect = main_window.rectangle()
+				x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
 
-			main_window.move_window(0, 0,
-				                    target_width + (w-cw),
-				                    target_height + (h-ch))
-			rect = main_window.client_area_rect()
-			x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
-			log.info('xemu window is at %d,%d w=%d,h=%d', x, y, w, h)
-			self.record_x = x
-			self.record_y = y
-			self.record_w = w
-			self.record_h = h
+				main_window.move_window(0, 0,
+					                    target_width + (w-cw),
+					                    target_height + (h-ch))
+				rect = main_window.client_area_rect()
+				x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
+				log.info('xemu window is at %d,%d w=%d,h=%d', x, y, w, h)
+				self.record_x = x
+				self.record_y = y
+				self.record_w = w
+				self.record_h = h
+			except:
+				log.exception('Failed to connect to xemu window')
+				self.app = None
 
 		self.launch_video_capture()
 
