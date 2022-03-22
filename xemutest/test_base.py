@@ -86,6 +86,10 @@ class TestBase:
 		self.test_env           = test_env
 		self.ffmpeg             = None
 
+		assert os.path.isfile(self.flash_path)
+		assert os.path.isfile(self.mcpx_path)
+		assert os.path.isfile(self.iso_path)
+
 		if platform.system() == 'Windows':
 			self.app: Optional[pywinauto.application.Application] = None
 			self.record_x: int = 0
