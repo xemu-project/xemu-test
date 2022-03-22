@@ -1,7 +1,7 @@
 #
 # Build test data
 #
-FROM ghcr.io/xboxdev/nxdk AS data
+FROM ghcr.io/xboxdev/nxdk AS test-xbe-data
 RUN mkdir /data
 
 COPY test-xbe /test-xbe
@@ -37,6 +37,10 @@ RUN make -C /test-pgraph/nxdk_pgraph_tests \
 RUN cp /test-pgraph/nxdk_pgraph_tests/nxdk_pgraph_tests.iso /data/TestNXDKPgraphTests/
 RUN cp /test-pgraph/config.cnf /data/TestNXDKPgraphTests/
 
+# Combine test data
+FROM scratch AS data
+COPY --from=test-xbe-data /data /data
+COPY --from=pgraph-data /data/TestNXDKPgraphTests /data/TestNXDKPgraphTests
 
 #
 # Build base test container image
@@ -78,6 +82,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV SDL_AUDIODRIVER=dummy
 
 # VNC port for debugging
+
 EXPOSE 5900
 
 RUN mkdir /work
@@ -87,7 +92,6 @@ COPY ./scripts /work/xemu-test/scripts/
 COPY ./xemutest /work/xemu-test/xemutest/
 COPY ./setup.py /work/xemu-test
 COPY --from=data /data /work/xemu-test/xemutest/data
-COPY --from=pgraph-data /data/TestNXDKPgraphTests /work/xemu-test/xemutest/data/TestNXDKPgraphTests
 RUN pip install /work/xemu-test
 ENTRYPOINT ["/docker_entry.sh"]
 CMD ["/usr/bin/python3", "-m", "xemutest", "/work/private", "/work/results"]
