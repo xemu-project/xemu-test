@@ -86,6 +86,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           keep_latest: 1
-          delete_tag_pattern: wheel- # defaults to ""
+          delete_tag_pattern: wheel-
+          delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
