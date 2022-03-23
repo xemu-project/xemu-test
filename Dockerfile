@@ -35,7 +35,8 @@ RUN make -C /test-pgraph/nxdk_pgraph_tests \
     CC=clang CXX=clang++ \
     -j$(numproc)
 RUN cp /test-pgraph/nxdk_pgraph_tests/nxdk_pgraph_tests.iso /data/TestNXDKPgraphTests/
-RUN cp /test-pgraph/config.cnf /data/TestNXDKPgraphTests/
+RUN mv /test-pgraph/config.cnf /data/TestNXDKPgraphTests/
+RUN mv /test-pgraph/golden_results /data/TestNXDKPgraphTests/
 
 # Combine test data
 FROM scratch AS data
