@@ -116,16 +116,22 @@ class TestBase:
 		self.setup_hdd_files(Fatx(self.hdd_path))
 
 	def _prepare_config(self):
-		config = ( '[system]\n'
-                  f'flash_path = {self.flash_path}\n'
-                  f'bootrom_path = {self.mcpx_path}\n'
-                  f'hdd_path = {self.hdd_path}\n'
-                   'shortanim = true\n'
-                   '[misc]\n'
-                   'check_for_update = false\n'
+		config = ( '[general]\n'
+				   'show_welcome = false\n'
+				   'skip_boot_anim = true\n'
+				   '[general.updates]\n'
+				   'check = false\n'
+				   '[net]\n'
+				   'enable = false\n'
+				   '[sys]\n'
+				   'mem_limit = \'64\'\n'
+				   '[sys.files]\n'
+				   f'bootrom_path = \'{self.mcpx_path}\'\n'
+				   f'flashrom_path = \'{self.flash_path}\'\n'
+				   f'hdd_path = \'{self.hdd_path}\'\n'
                   )
 		log.info('Prepared config file:\n%s', config)
-		with open('xemu.ini', 'w') as f:
+		with open('xemu.toml', 'w') as f:
 			f.write(config)
 
 	def _launch_video_capture(self):
@@ -162,9 +168,9 @@ class TestBase:
 	def _launch_xemu(self):
 
 		if platform.system() == 'Windows':
-			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
+			c = [self.test_env.xemu_path, '-config_path', './xemu.toml', '-dvd_path', self.iso_path]
 		else:
-			c = [self.test_env.xemu_path, '-config_path', './xemu.ini', '-dvd_path', self.iso_path]
+			c = [self.test_env.xemu_path, '-config_path', './xemu.toml', '-dvd_path', self.iso_path]
 			if  not self.test_env.disable_fullscreen:
 				c.append('-full-screen')
 		log.info('Launching xemu with command %s from directory %s', repr(c), os.getcwd())
