@@ -219,7 +219,7 @@ class TestBase:
 		self._terminate_video_capture()
 
 	def _mount_hdd(self):
-		log.info('Mounting HDD image')
+		log.info(f'Mounting HDD image {self.hdd_path} at {self.mount_path}')
 		if os.path.exists(self.mount_path):
 			shutil.rmtree(self.mount_path)
 		os.makedirs(self.mount_path, exist_ok=True)
