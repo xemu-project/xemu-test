@@ -1,4 +1,10 @@
 # pgraph test suite configuration
+# Lines starting with '#' are ignored.
+# To enable a test suite, add its name on a single line with no leading #. E.g.,
+# Lighting normals
+# To disable a single test within a suite, add the name of the test prefixed with
+#  a '-' after the uncommented suite. E.g.,
+# -NoNormal
 
 Lighting normals
 # NoNormal
@@ -30,6 +36,7 @@ Lighting normals
 # Nz_97-inlinebuf
 # Nz_97-inlineelements
 
+#-------------------
 #Attrib carryover
 # L-d0.0_0.0_1.0_1.0-da
 # L-d0.2_0.0_0.6_1.0-ie
@@ -88,11 +95,27 @@ Lighting normals
 # T-t30.5_0.0_0.0_1.0-ia
 # T-t30.8_0.0_0.0_1.0-ib
 
+#-------------------
 #Attrib setter
 # Setters-alpha
 # Setters-visible
 
-#Clear
+#-------------------
+#Attrib float
+# -1 to 1
+# -8 to 1
+# -INF to +INF
+# -Max (normal) to +Max (normal)
+# -Max (subnormal) to +Max (subnormal)
+# -Min (normal) to +Min (normal)
+# -Min (subnormal) to +Min (subnormal)
+# -NaN to +NaN (quiet)
+# -NaN to +NaN (signalling)
+# 0 to 1
+# 0 to 8
+
+#-------------------
+Clear
 # C00000000_Depth_n
 # C00000000_Depth_y
 # C00000001_Depth_n
@@ -106,16 +129,24 @@ Lighting normals
 # C01010101_Depth_n
 # C01010101_Depth_y
 
-#Color zeta overlap
+#-------------------
+#Color mask blend
+# C00010101_O32774_S772_D0
+
+#-------------------
+Color zeta overlap
 # ColorIntoZeta
 # Swap
-# ZetaIntoColor
+# ZetaIntoColor fails due to #775
+-ZetaIntoColor
 
+#-------------------
 #Combiner
 # Flags
 # Independence
 # Mux
 
+#-------------------
 #Fog
 # AFF-exp-planar
 # AFF-exp2-planar
@@ -124,6 +155,7 @@ Lighting normals
 # AFF-linear-planar
 # AFF-linear_abs-planar
 
+#-------------------
 #Fog vsh
 # AFF-exp-planar
 # AFF-exp2-planar
@@ -132,7 +164,8 @@ Lighting normals
 # AFF-linear-planar
 # AFF-linear_abs-planar
 
-#Fog inf coord
+#-------------------
+Fog inf coord
 # AFF-exp-planar
 # AFF-exp2-planar
 # AFF-exp2_abs-planar
@@ -140,6 +173,7 @@ Lighting normals
 # AFF-linear-planar
 # AFF-linear_abs-planar
 
+#-------------------
 #Fog coord vec4
 # W-0.00_0.25_0.00_0.00
 # W-0.30_0.30_0.30_1.00
@@ -162,6 +196,7 @@ Lighting normals
 # Z-0.00_0.00_0.20_0.00
 # Z-0.00_0.00_0.80_0.00
 
+#-------------------
 #Front face
 # FrontFace_0_CF_B
 # FrontFace_0_CF_F
@@ -176,6 +211,7 @@ Lighting normals
 # FrontFace_CW_CF_F
 # FrontFace_CW_CF_FaB
 
+#-------------------
 #Depth buffer
 # DepthFmt_z16_Cn_FZn_M00003f
 # DepthFmt_z16_Cn_FZn_M00043e
@@ -568,7 +604,41 @@ Lighting normals
 # DepthFmt_z24_Cy_FZn_Mfc0000
 # DepthFmt_z24_Cy_FZn_Mffffff
 
-#Image blit
+#-------------------
+#Depth buffer fixed function
+# z16_Cn_FZn_M000003
+# z16_Cn_FZn_M004002
+# z16_Cn_FZn_M008001
+# z16_Cn_FZn_M00c000
+# z16_Cn_FZn_M00ffff
+# z16_Cn_FZy_M000003
+# z16_Cn_FZy_M004002
+# z16_Cn_FZy_M008001
+# z16_Cn_FZy_M00c000
+# z16_Cn_FZy_M00ffff
+# z16_Cy_FZn_M000003
+# z16_Cy_FZn_M004002
+# z16_Cy_FZn_M008001
+# z16_Cy_FZn_M00c000
+# z16_Cy_FZn_M00ffff
+# z16_Cy_FZy_M000003
+# z16_Cy_FZy_M004002
+# z16_Cy_FZy_M008001
+# z16_Cy_FZy_M00c000
+# z16_Cy_FZy_M00ffff
+# z24_Cn_FZn_M000003
+# z24_Cn_FZn_M400002
+# z24_Cn_FZn_M800001
+# z24_Cn_FZn_Mc00000
+# z24_Cn_FZn_Mffffff
+# z24_Cy_FZn_M000003
+# z24_Cy_FZn_M400002
+# z24_Cy_FZn_M800001
+# z24_Cy_FZn_Mc00000
+# z24_Cy_FZn_Mffffff
+
+#-------------------
+Image blit
 # ImgBlt_BLENDAND_XRGB_B00000000
 # ImgBlt_BLENDAND_XRGB_B007FFFFF
 # ImgBlt_BLENDAND_XRGB_B00800000
@@ -593,6 +663,7 @@ Lighting normals
 # ImgBlt_SRCCOPY_XRGB_B00000000
 # ImgBlt_SRCCOPY_ZRGB_B00000000
 
+#-------------------
 #Material alpha
 # MatA_SMat_A0
 # MatA_SMat_A3D4CCCCD
@@ -619,7 +690,8 @@ Lighting normals
 # MatA_SVSpec_A40000000
 # MatA_SVSpec_ABF800000
 
-#Material color
+#-------------------
+Material color
 # 001_RG0_11
 # 011_rBg_11
 # 011_rG0_B1
@@ -627,15 +699,20 @@ Lighting normals
 # 310_rG0_11
 # 311_rG0_11
 
+#-------------------
 #Material color source
 # FromMaterial
 # FromVertexDiffuse
 # FromVertexSpecular
 
+#-------------------
+# Requires xemu PR #805
 #Overlapping draw modes
 # ArrElm_DrwArr_ArrElm
 # DrwArr_DrwArr
+# SquashOpt
 
+#-------------------
 #SetVertexData
 # SET_VERTEX_DATA2F_M
 # SET_VERTEX_DATA2S-0001
@@ -645,9 +722,11 @@ Lighting normals
 # SET_VERTEX_DATA4S_M-7FFF
 # SET_VERTEX_DATA4UB
 
+#-------------------
 #Texture border
 # 2D
 
+#-------------------
 #Texgen with texture matrix
 # Disabled_Arbitrary
 # Disabled_Double
@@ -694,12 +773,14 @@ Lighting normals
 # ReflectionMap_ShiftVMinus
 # ReflectionMap_ShiftVPlus
 
+#-------------------
 #Texgen
 # Disabled
 # EyeLinear
 # NormalMap
 # ReflectionMap
 
+#-------------------
 #Texture format
 # TexFmt_A1R5G5B5
 # TexFmt_A1R5G5B5_L
@@ -731,11 +812,19 @@ Lighting normals
 # TexFmt_X1R5G5B5_L
 # TexFmt_X8R8G8B8
 # TexFmt_X8R8G8B8_L
+# TexFmt_Y16_L
 # TexFmt_Y8
 # TexFmt_Y8_L
 # TexFmt_YUY2_L
 
-#Texture Matrix
+#-------------------
+#Texture Framebuffer Blit
+# FBToOldRenderTarget
+# FBToTexture
+# FBToZetaAsTex
+
+#-------------------
+Texture Matrix
 # Arbitrary
 # Double
 # Half
@@ -748,6 +837,7 @@ Lighting normals
 # ShiftVMinus
 # ShiftVPlus
 
+#-------------------
 #Texture render target
 # TexFmt_A1R5G5B5
 # TexFmt_A1R5G5B5_L
@@ -779,10 +869,182 @@ Lighting normals
 # TexFmt_X1R5G5B5_L
 # TexFmt_X8R8G8B8
 # TexFmt_X8R8G8B8_L
+# TexFmt_Y16_L
 # TexFmt_Y8
 # TexFmt_Y8_L
 # TexFmt_YUY2_L
 
+#-------------------
+#Texture render update in place
+# RenderToInputTexture
+
+#-------------------
+#Texture shadow comparator
+# F16_-6.00-193.00_5.9400_A
+# F16_-6.00-193.00_5.9400_EQ
+# F16_-6.00-193.00_5.9400_GE
+# F16_-6.00-193.00_5.9400_GT
+# F16_-6.00-193.00_5.9400_LE
+# F16_-6.00-193.00_5.9400_LT
+# F16_-6.00-193.00_5.9400_N
+# F16_-6.00-193.00_5.9400_NE
+# F16_10.00-20.00_15.0000_A
+# F16_10.00-20.00_15.0000_EQ
+# F16_10.00-20.00_15.0000_GE
+# F16_10.00-20.00_15.0000_GT
+# F16_10.00-20.00_15.0000_LE
+# F16_10.00-20.00_15.0000_LT
+# F16_10.00-20.00_15.0000_N
+# F16_10.00-20.00_15.0000_NE
+# F16f_-6.00-193.00_4.5669_A
+# F16f_-6.00-193.00_4.5669_EQ
+# F16f_-6.00-193.00_4.5669_GE
+# F16f_-6.00-193.00_4.5669_GT
+# F16f_-6.00-193.00_4.5669_LE
+# F16f_-6.00-193.00_4.5669_LT
+# F16f_-6.00-193.00_4.5669_N
+# F16f_-6.00-193.00_4.5669_NE
+# F16f_10.00-20.00_14.0400_A
+# F16f_10.00-20.00_14.0400_EQ
+# F16f_10.00-20.00_14.0400_GE
+# F16f_10.00-20.00_14.0400_GT
+# F16f_10.00-20.00_14.0400_LE
+# F16f_10.00-20.00_14.0400_LT
+# F16f_10.00-20.00_14.0400_N
+# F16f_10.00-20.00_14.0400_NE
+# F24_-6.00-193.00_10.6500_A
+# F24_-6.00-193.00_10.6500_EQ
+# F24_-6.00-193.00_10.6500_GE
+# F24_-6.00-193.00_10.6500_GT
+# F24_-6.00-193.00_10.6500_LE
+# F24_-6.00-193.00_10.6500_LT
+# F24_-6.00-193.00_10.6500_N
+# F24_-6.00-193.00_10.6500_NE
+# F24_10.00-20.00_11.4700_A
+# F24_10.00-20.00_11.4700_EQ
+# F24_10.00-20.00_11.4700_GE
+# F24_10.00-20.00_11.4700_GT
+# F24_10.00-20.00_11.4700_LE
+# F24_10.00-20.00_11.4700_LT
+# F24_10.00-20.00_11.4700_N
+# F24_10.00-20.00_11.4700_NE
+# P16_-6.00-193.00_5.9400_A
+# P16_-6.00-193.00_5.9400_EQ
+# P16_-6.00-193.00_5.9400_GE
+# P16_-6.00-193.00_5.9400_GT
+# P16_-6.00-193.00_5.9400_LE
+# P16_-6.00-193.00_5.9400_LT
+# P16_-6.00-193.00_5.9400_N
+# P16_-6.00-193.00_5.9400_NE
+# P16_10.00-20.00_15.0000_A
+# P16_10.00-20.00_15.0000_EQ
+# P16_10.00-20.00_15.0000_GE
+# P16_10.00-20.00_15.0000_GT
+# P16_10.00-20.00_15.0000_LE
+# P16_10.00-20.00_15.0000_LT
+# P16_10.00-20.00_15.0000_N
+# P16_10.00-20.00_15.0000_NE
+# P16f_-6.00-193.00_4.5669_A
+# P16f_-6.00-193.00_4.5669_EQ
+# P16f_-6.00-193.00_4.5669_GE
+# P16f_-6.00-193.00_4.5669_GT
+# P16f_-6.00-193.00_4.5669_LE
+# P16f_-6.00-193.00_4.5669_LT
+# P16f_-6.00-193.00_4.5669_N
+# P16f_-6.00-193.00_4.5669_NE
+# P16f_10.00-20.00_14.0400_A
+# P16f_10.00-20.00_14.0400_EQ
+# P16f_10.00-20.00_14.0400_GE
+# P16f_10.00-20.00_14.0400_GT
+# P16f_10.00-20.00_14.0400_LE
+# P16f_10.00-20.00_14.0400_LT
+# P16f_10.00-20.00_14.0400_N
+# P16f_10.00-20.00_14.0400_NE
+# P24_-6.00-193.00_10.6500_A
+# P24_-6.00-193.00_10.6500_EQ
+# P24_-6.00-193.00_10.6500_GE
+# P24_-6.00-193.00_10.6500_GT
+# P24_-6.00-193.00_10.6500_LE
+# P24_-6.00-193.00_10.6500_LT
+# P24_-6.00-193.00_10.6500_N
+# P24_-6.00-193.00_10.6500_NE
+# P24_10.00-20.00_11.4500_A
+# P24_10.00-20.00_11.4500_EQ
+# P24_10.00-20.00_11.4500_GE
+# P24_10.00-20.00_11.4500_GT
+# P24_10.00-20.00_11.4500_LE
+# P24_10.00-20.00_11.4500_LT
+# P24_10.00-20.00_11.4500_N
+# P24_10.00-20.00_11.4500_NE
+# R16_0-100_80_A
+# R16_0-100_80_EQ
+# R16_0-100_80_GE
+# R16_0-100_80_GT
+# R16_0-100_80_LE
+# R16_0-100_80_LT
+# R16_0-100_80_N
+# R16_0-100_80_NE
+# R16_0-FFFF_7FFF_A
+# R16_0-FFFF_7FFF_EQ
+# R16_0-FFFF_7FFF_GE
+# R16_0-FFFF_7FFF_GT
+# R16_0-FFFF_7FFF_LE
+# R16_0-FFFF_7FFF_LT
+# R16_0-FFFF_7FFF_N
+# R16_0-FFFF_7FFF_NE
+# R16_100-200_180_A
+# R16_100-200_180_EQ
+# R16_100-200_180_GE
+# R16_100-200_180_GT
+# R16_100-200_180_LE
+# R16_100-200_180_LT
+# R16_100-200_180_N
+# R16_100-200_180_NE
+# R24_0-100_80_A
+# R24_0-100_80_EQ
+# R24_0-100_80_GE
+# R24_0-100_80_GT
+# R24_0-100_80_LE
+# R24_0-100_80_LT
+# R24_0-100_80_N
+# R24_0-100_80_NE
+# R24_0-FFFFFF_7FFFFF_A
+# R24_0-FFFFFF_7FFFFF_EQ
+# R24_0-FFFFFF_7FFFFF_GE
+# R24_0-FFFFFF_7FFFFF_GT
+# R24_0-FFFFFF_7FFFFF_LE
+# R24_0-FFFFFF_7FFFFF_LT
+# R24_0-FFFFFF_7FFFFF_N
+# R24_0-FFFFFF_7FFFFF_NE
+# R24_100-200_180_A
+# R24_100-200_180_EQ
+# R24_100-200_180_GE
+# R24_100-200_180_GT
+# R24_100-200_180_LE
+# R24_100-200_180_LT
+# R24_100-200_180_N
+# R24_100-200_180_NE
+
+#-------------------
+#Texture signed component tests
+# A8R8G8B8_0x0000
+# A8R8G8B8_0x0001
+# A8R8G8B8_0x0002
+# A8R8G8B8_0x0003
+# A8R8G8B8_0x0004
+# A8R8G8B8_0x0005
+# A8R8G8B8_0x0006
+# A8R8G8B8_0x0007
+# A8R8G8B8_0x0008
+# A8R8G8B8_0x0009
+# A8R8G8B8_0x000A
+# A8R8G8B8_0x000B
+# A8R8G8B8_0x000C
+# A8R8G8B8_0x000D
+# A8R8G8B8_0x000E
+# A8R8G8B8_0x000F
+
+#-------------------
 #3D primitive
 # LineLoop
 # LineLoop-inlinearrays
@@ -825,6 +1087,7 @@ Lighting normals
 # Triangles-inlinebuf
 # Triangles-inlineelements
 
+#-------------------
 #2D Lines
 # 2DLine-R5G5B5-C000003E0-400_200-400_400
 # 2DLine-R5G6B5-C000007E0-400_200-400_400
@@ -840,7 +1103,15 @@ Lighting normals
 # 2DLine-R8G8B8-C00FFFFFF-639_479-0_0
 # 2DLine-R8G8B8-CFFFFFFFF-100_100-100_400
 
+#-------------------
+Vertex shader independence tests
+# MAC_ILU_Independence
+
+#-------------------
 #Vertex shader rounding tests
+# Compositing_-2
+# Compositing_-4
+# Compositing_2
 # Geometry_0.000000
 # Geometry_0.001000
 # Geometry_0.500000
@@ -850,6 +1121,7 @@ Lighting normals
 # Geometry_0.999000
 # RenderTarget
 
+#-------------------
 #Volume texture
 # A1R5G5B5
 # A4R4G4B4
@@ -868,11 +1140,112 @@ Lighting normals
 # X8R8G8B8
 # Y8
 
+#-------------------
 #W param
+# ff_w_zero__bitri
+# ff_w_zero__quad
 # w_gaps
 # w_neg_strip
 # w_pos_strip
 
+#-------------------
+Window clip
+# E_x0y0_w0h0-x0y0_w0h0
+# E_x0y0_w0h0-x16y16_w8h8
+# E_x0y0_w128h128-x0y0_w0h0
+# E_x0y0_w128h128-x16y16_w8h8
+# E_x0y0_w1h1-x0y0_w0h0
+# E_x0y0_w1h1-x16y16_w8h8
+# E_x0y0_w255h255-x0y0_w0h0
+# E_x0y0_w255h255-x16y16_w8h8
+# E_x0y0_w256h256-x0y0_w0h0
+# E_x0y0_w256h256-x16y16_w8h8
+# E_x1y1_w253h253-x0y0_w0h0
+# E_x1y1_w253h253-x16y16_w8h8
+# E_x1y1_w254h254-x0y0_w0h0
+# E_x1y1_w254h254-x16y16_w8h8
+# E_x255y255_w1h1-x0y0_w0h0
+# E_x255y255_w1h1-x16y16_w8h8
+# E_x256y256_w1h1-x0y0_w0h0
+# E_x256y256_w1h1-x16y16_w8h8
+# E_x8y16_w3840h3840-x0y0_w0h0
+# E_x8y16_w3840h3840-x16y16_w8h8
+# E_x96y96_w64h64-x0y0_w0h0
+# E_x96y96_w64h64-x16y16_w8h8
+# I_x0y0_w0h0-x0y0_w0h0
+# I_x0y0_w0h0-x16y16_w8h8
+# I_x0y0_w128h128-x0y0_w0h0
+# I_x0y0_w128h128-x16y16_w8h8
+# I_x0y0_w1h1-x0y0_w0h0
+# I_x0y0_w1h1-x16y16_w8h8
+# I_x0y0_w255h255-x0y0_w0h0
+# I_x0y0_w255h255-x16y16_w8h8
+# I_x0y0_w256h256-x0y0_w0h0
+# I_x0y0_w256h256-x16y16_w8h8
+# I_x1y1_w253h253-x0y0_w0h0
+# I_x1y1_w253h253-x16y16_w8h8
+# I_x1y1_w254h254-x0y0_w0h0
+# I_x1y1_w254h254-x16y16_w8h8
+# I_x255y255_w1h1-x0y0_w0h0
+# I_x255y255_w1h1-x16y16_w8h8
+# I_x256y256_w1h1-x0y0_w0h0
+# I_x256y256_w1h1-x16y16_w8h8
+# I_x8y16_w3840h3840-x0y0_w0h0
+# I_x8y16_w3840h3840-x16y16_w8h8
+# I_x96y96_w64h64-x0y0_w0h0
+# I_x96y96_w64h64-x16y16_w8h8
+# rE_x0y0_w0h0-x0y0_w0h0
+# rE_x0y0_w0h0-x16y16_w8h8
+# rE_x0y0_w128h128-x0y0_w0h0
+# rE_x0y0_w128h128-x16y16_w8h8
+# rE_x0y0_w1h1-x0y0_w0h0
+# rE_x0y0_w1h1-x16y16_w8h8
+# rE_x0y0_w255h255-x0y0_w0h0
+# rE_x0y0_w255h255-x16y16_w8h8
+# rE_x0y0_w256h256-x0y0_w0h0
+# rE_x0y0_w256h256-x16y16_w8h8
+# rE_x1y1_w253h253-x0y0_w0h0
+# rE_x1y1_w253h253-x16y16_w8h8
+# rE_x1y1_w254h254-x0y0_w0h0
+# rE_x1y1_w254h254-x16y16_w8h8
+# rE_x255y255_w1h1-x0y0_w0h0
+# rE_x255y255_w1h1-x16y16_w8h8
+# rE_x256y256_w1h1-x0y0_w0h0
+# rE_x256y256_w1h1-x16y16_w8h8
+# rE_x8y16_w3840h3840-x0y0_w0h0
+# rE_x8y16_w3840h3840-x16y16_w8h8
+# rE_x96y96_w64h64-x0y0_w0h0
+# rE_x96y96_w64h64-x16y16_w8h8
+# rI_x0y0_w0h0-x0y0_w0h0
+# rI_x0y0_w0h0-x16y16_w8h8
+# rI_x0y0_w128h128-x0y0_w0h0
+# rI_x0y0_w128h128-x16y16_w8h8
+# rI_x0y0_w1h1-x0y0_w0h0
+# rI_x0y0_w1h1-x16y16_w8h8
+# rI_x0y0_w255h255-x0y0_w0h0
+# rI_x0y0_w255h255-x16y16_w8h8
+# rI_x0y0_w256h256-x0y0_w0h0
+# rI_x0y0_w256h256-x16y16_w8h8
+# rI_x1y1_w253h253-x0y0_w0h0
+# rI_x1y1_w253h253-x16y16_w8h8
+# rI_x1y1_w254h254-x0y0_w0h0
+# rI_x1y1_w254h254-x16y16_w8h8
+# rI_x255y255_w1h1-x0y0_w0h0
+# rI_x255y255_w1h1-x16y16_w8h8
+# rI_x256y256_w1h1-x0y0_w0h0
+# rI_x256y256_w1h1-x16y16_w8h8
+# rI_x8y16_w3840h3840-x0y0_w0h0
+# rI_x8y16_w3840h3840-x16y16_w8h8
+# rI_x96y96_w64h64-x0y0_w0h0
+# rI_x96y96_w64h64-x16y16_w8h8
+# rsE_x60y60_w64h64-x0y0_w64h64
+# rsI_x60y60_w64h64-x0y0_w64h64
+# sE_x60y60_w64h64-x0y0_w64h64
+# sI_x60y60_w64h64-x0y0_w64h64
+
+#-------------------
 Zero stride
 # DrawArrays
 # InlineElements
+
+#-------------------

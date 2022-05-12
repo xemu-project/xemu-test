@@ -30,6 +30,7 @@ COPY test-pgraph /test-pgraph
 RUN make -C /test-pgraph/nxdk_pgraph_tests \
     AUTORUN_IMMEDIATELY=y \
     ENABLE_SHUTDOWN=y \
+    ENABLE_PROGRESS_LOG=y \
     FALLBACK_OUTPUT_ROOT_PATH="c:" \
     RUNTIME_CONFIG_PATH="c:/pgraph_tests.cnf" \
     CC=clang CXX=clang++ \
