@@ -7,7 +7,6 @@ import sys
 
 import xemutest
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__file__)
 
 
@@ -38,6 +37,11 @@ def main():
 				tests.append((test_name, test_class))
 
 	results_root = os.path.abspath(os.path.expanduser(args.results))
+	os.makedirs(results_root, exist_ok=True)
+
+	log_file_name = os.path.join(results_root, "xemutest.log")
+	logging.basicConfig(filename=log_file_name, filemode='w', level=logging.INFO)
+
 	if args.data:
 		test_data_root = os.path.expanduser(args.data)
 	else:
