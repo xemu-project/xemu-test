@@ -1,7 +1,10 @@
+FROM xboxdev/nxdk:latest AS nxdk-base
+
+
 #
 # Build test data
 #
-FROM ghcr.io/xboxdev/nxdk AS test-xbe-data
+FROM nxdk-base AS test-xbe-data
 RUN mkdir /data
 
 COPY test-xbe /test-xbe
@@ -9,48 +12,63 @@ RUN mkdir /data/TestXBE
 RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
 RUN cp /test-xbe/tester.iso /data/TestXBE/
 
-# The nxdk_pgraph_tests includes its own copy of the nxdk which needs more build
-# infrastructure than the nxdk-runbase used for other tests.
-FROM ubuntu:20.04 AS pgraph-buildbase
-ENV DEBIAN_FRONTEND noninteractive
+
+#
+# Build nxdk_pgraph_tests
+#
+FROM nxdk-base AS pgraph-data
+
+RUN apk add --upgrade --no-cache curl libcurl git
+
+WORKDIR /work
+
+RUN mkdir -p /data/TestNXDKPgraphTests
+RUN curl \
+    -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2025-01-23_02-07-06-535990005/nxdk_pgraph_tests_xiso.iso \
+    --output clean_nxdk_pgraph_tests_xiso.iso
+
+RUN cp /usr/src/nxdk/tools/extract-xiso/build/extract-xiso /bin \
+    && extract-xiso -x clean_nxdk_pgraph_tests_xiso.iso
+COPY test-pgraph/config.json clean_nxdk_pgraph_tests_xiso/nxdk_pgraph_tests_config.json
+RUN extract-xiso -c clean_nxdk_pgraph_tests_xiso nxdk_pgraph_tests_xiso.iso \
+    && mv nxdk_pgraph_tests_xiso.iso /data/TestNXDKPgraphTests/ \
+    ;
+
+RUN git clone --depth 1 https://github.com/abaire/nxdk_pgraph_tests_golden_results.git /data/TestNXDKPgraphTests/nxdk_pgraph_tests_golden_results
+
+
+FROM ubuntu:24.10 AS ubuntu-base
 RUN set -xe; \
     apt-get -qy update \
     && apt-get -qy install \
-        bison \
-        clang \
+        python3-pip \
+        python3-venv \
+    ;
+
+#
+# Build xemutest module
+#
+FROM ubuntu-base AS build-xemutest
+
+RUN apt-get -qy install \
         cmake \
-        flex \
-        lld \
-        llvm \
-        make
+        ;
 
-FROM pgraph-buildbase AS pgraph-data
-RUN mkdir -p /data/TestNXDKPgraphTests
-COPY test-pgraph /test-pgraph
-RUN make -C /test-pgraph/nxdk_pgraph_tests \
-    AUTORUN_IMMEDIATELY=y \
-    ENABLE_SHUTDOWN=y \
-    FALLBACK_OUTPUT_ROOT_PATH="c:" \
-    RUNTIME_CONFIG_PATH="c:/pgraph_tests.cnf" \
-    CC=clang CXX=clang++ \
-    -j$(numproc)
-RUN cp /test-pgraph/nxdk_pgraph_tests/nxdk_pgraph_tests.iso /data/TestNXDKPgraphTests/
-RUN mv /test-pgraph/config.cnf /data/TestNXDKPgraphTests/
-RUN mv /test-pgraph/golden_results /data/TestNXDKPgraphTests/
+WORKDIR /build
+COPY ./xemutest /work/xemu-test/xemutest/
+COPY ./setup.py /work/xemu-test
+RUN python3 -m venv venv \
+    && . venv/bin/activate \
+    && pip install /work/xemu-test \
+    ;
 
-# Combine test data
-FROM scratch AS data
-COPY --from=test-xbe-data /data /data
-COPY --from=pgraph-data /data/TestNXDKPgraphTests /data/TestNXDKPgraphTests
 
 #
 # Build base test container image
 #
-FROM ubuntu:20.04 as run-container-base
+FROM ubuntu-base AS run-container-base
 ENV DEBIAN_FRONTEND=noninteractive
-RUN set -xe; \
-    apt-get -qy update \
-    && apt-get -qy install \
+RUN apt-get -qy install \
         python3-pip \
         xvfb \
         x11-utils \
@@ -69,11 +87,16 @@ RUN set -xe; \
         libpulse0 \
         libsamplerate0 \
         libsdl2-2.0-0 \
-        libssl1.1 \
+        libssl-dev \
         libstdc++6 \
         perceptualdiff \
         zlib1g \
         ;
+
+# Combine test data
+FROM scratch AS data
+COPY --from=test-xbe-data /data /data
+COPY --from=pgraph-data /data/TestNXDKPgraphTests /data/TestNXDKPgraphTests
 
 #
 # Build final test container
@@ -86,13 +109,13 @@ ENV SDL_AUDIODRIVER=dummy
 
 EXPOSE 5900
 
-RUN mkdir /work
 WORKDIR /work
+
 COPY scripts/docker_entry.sh /docker_entry.sh
 COPY ./scripts /work/xemu-test/scripts/
-COPY ./xemutest /work/xemu-test/xemutest/
-COPY ./setup.py /work/xemu-test
-COPY --from=data /data /work/xemu-test/xemutest/data
-RUN pip install /work/xemu-test
+COPY --from=data /data /work/xemu-test/data
+COPY --from=build-xemutest /build/venv /venv
+
 ENTRYPOINT ["/docker_entry.sh"]
-CMD ["/usr/bin/python3", "-m", "xemutest", "/work/private", "/work/results"]
+
+CMD ["/venv/bin/python3", "-m", "xemutest", "--data", "/work/xemu-test/data", "/work/private", "/work/results"]

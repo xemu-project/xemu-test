@@ -1,3 +1,0 @@
-[submodule "nxdk_pgraph_tests"]
-	path = test-pgraph/nxdk_pgraph_tests
-	url = https://github.com/abaire/nxdk_pgraph_tests.git

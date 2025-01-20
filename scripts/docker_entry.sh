@@ -10,8 +10,27 @@ if [ $# -eq 0 ]; then
 fi
 
 set -e
-echo "[*] Installing xemu package"
-apt-get -qy install /work/inputs/xemu.deb
+if [[ -e /work/inputs/xemu.deb ]]; then
+  echo "[*] Installing xemu package"
+  apt-get -qy install /work/inputs/xemu.deb
+else
+    appimage_file="$(find /work/inputs -name "*.AppImage" -print0 \
+        | sort -zV \
+        | tail -zn 1 \
+        | tr -d '\0')"
+    readonly appimage_file
+
+    if [[ "${appimage_file:+x}" != "x" ]]; then
+      echo "No .deb or .AppImage found in /work/inputs."
+      exit 1
+    fi
+
+    echo "[*] Using xemu from ${appimage_file}"
+
+    chmod +x "${appimage_file}"
+    "${appimage_file}" --appimage-extract > /dev/null 2>&1
+    export PATH="$PWD/squashfs-root/usr/bin:${PATH}"
+fi
 
 echo "exec i3" >> ~/.xinitrc
 chmod +x ~/.xinitrc

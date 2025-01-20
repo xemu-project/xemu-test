@@ -19,7 +19,11 @@ def main():
 	ap.add_argument('--ffmpeg', help='Path to the ffmpeg binary or DISABLE')
 	ap.add_argument('--no-fullscreen', action='store_true', help='Force xemu to run in a window')
 	ap.add_argument('--perceptualdiff', help='Path to the perceptualdiff binary or DISABLE')
+	ap.add_argument('-v', '--verbose', action='store_true', help='Print verbose logging information')
 	args = ap.parse_args()
+
+	if args.verbose:
+		logging.basicConfig(level=logging.DEBUG)
 
 	tests = []
 	result = True
@@ -52,7 +56,7 @@ def main():
 
 	test_env = xemutest.TestEnvironment(
 		os.path.abspath(os.path.expanduser(args.private)),
-		args.xemu,
+		xemu_path,
 		args.ffmpeg,
 		args.perceptualdiff,
 		args.no_fullscreen)
