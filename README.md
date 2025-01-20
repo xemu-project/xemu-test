@@ -28,12 +28,12 @@ that image for testing:
 
 Set up the following dir structure:
 
-- /work/results: Results will be copied here
-- /work/private: Directory for ROMs and other files
-  - /work/private/mcpx.bin
-  - /work/private/bios.bin
-- /work/inputs: Directory containing xemu build to test
-  - /work/xemu.deb
+- `/work/results`: Results will be copied here
+- `/work/private`: Directory for ROMs and other files
+  - `/work/private/mcpx.bin`
+  - `/work/private/bios.bin`
+- `/work/inputs`: Directory containing xemu build to test
+  - `/work/xemu.deb` or `/work/xemu.AppImage`
 
 Then run with something like:
 

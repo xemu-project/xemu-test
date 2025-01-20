@@ -58,7 +58,7 @@ class TestBase:
 	"""
 	Provides a basic framework that:
 	- Starts FFMPEG to record footage of xemu while it runs
-	- Launches xemu with an test XBE loaded from a disc image
+	- Launches xemu with a test XBE loaded from a disc image
 	- Waits for xemu to shutdown or timeout
 	- Inspect the filesystem for test results
 
@@ -85,6 +85,7 @@ class TestBase:
 		self.timeout            = timeout
 		self.test_env           = test_env
 		self.ffmpeg             = None
+		self.xemu_exit_status   = None
 
 		assert os.path.isfile(self.flash_path)
 		assert os.path.isfile(self.mcpx_path)
@@ -171,7 +172,7 @@ class TestBase:
 			c = [self.test_env.xemu_path, '-config_path', './xemu.toml', '-dvd_path', self.iso_path]
 		else:
 			c = [self.test_env.xemu_path, '-config_path', './xemu.toml', '-dvd_path', self.iso_path]
-			if  not self.test_env.disable_fullscreen:
+			if not self.test_env.disable_fullscreen:
 				c.append('-full-screen')
 		log.info('Launching xemu with command %s from directory %s', repr(c), os.getcwd())
 		start = time.time()
@@ -213,10 +214,11 @@ class TestBase:
 			status = xemu.poll()
 			if status is not None:
 				log.info('xemu exited %d', status)
+				self.xemu_exit_status = status
 				break
 			now = time.time()
 			if (now - start) > self.timeout:
-				log.info('Timeout exceeded. Terminating.')
+				log.warning('Timeout exceeded. Terminating.')
 				xemu.kill()
 				xemu.wait()
 				break
@@ -253,9 +255,10 @@ class TestBase:
 			else:
 				perceptualdiff_path = 'perceptualdiff'
 
-		c = [perceptualdiff_path, expected_path, actual_path, '--verbose']
+		c = [perceptualdiff_path, '--verbose']
 		if diff_result_path:
 			c.extend(['--output', diff_result_path])
+		c.extend([expected_path, actual_path])
 		result = subprocess.run(c, capture_output=True)
 		return result.returncode == 0, result.stderr.decode('utf-8')
 
