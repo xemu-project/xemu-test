@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-import subprocess
-import shutil
 import logging
 import os
-import time
 import platform
+import shutil
+import subprocess
 import sys
-from typing import Optional, Tuple
+import time
+from pathlib import Path
+from typing import Optional, Tuple, Union
 
 from pyfatx import Fatx
 
@@ -24,22 +25,21 @@ class TestEnvironment:
 
     def __init__(
         self,
-        private_path: str,
-        xemu_path: Optional[str],
+        private_path: Union[str, Path],
+        xemu_path: Optional[Union[str, Path]],
         ffmpeg_path: Optional[str],
         perceptualdiff_path: Optional[str],
         disable_fullscreen: bool = False,
     ):
-        self.private_path = private_path
+        self.private_path = Path(private_path)
 
-        cur_dir = os.getcwd()
         if not xemu_path:
             if platform.system() == "Windows":
-                self.xemu_path = os.path.join(cur_dir, "xemu.exe")
+                self.xemu_path = Path.cwd() / "xemu.exe"
             else:
-                self.xemu_path = "xemu"
+                self.xemu_path = Path("xemu")
         else:
-            self.xemu_path = xemu_path
+            self.xemu_path = Path(xemu_path)
 
         self.ffmpeg_path = ffmpeg_path
         self.perceptualdiff_path = perceptualdiff_path
@@ -69,28 +69,28 @@ class TestBase:
         self,
         test_env: TestEnvironment,
         xbox_results_path: str,
-        results_out_path: str,
-        iso_path: str,
+        results_out_path: Union[str, Path],
+        iso_path: Union[str, Path],
         timeout: int = 60,
     ):
-        cur_dir = os.getcwd()
+        cur_dir = Path.cwd()
 
-        self.flash_path = os.path.join(test_env.private_path, "bios.bin")
-        self.mcpx_path = os.path.join(test_env.private_path, "mcpx.bin")
-        self.hdd_path = os.path.join(cur_dir, "test.img")
-        self.mount_path = os.path.join(cur_dir, "xemu-hdd-mount")
-        self.iso_path = iso_path
-        self.results_in_path = os.path.join(self.mount_path, xbox_results_path)
-        self.results_out_path = results_out_path
-        self.video_capture_path = os.path.join(self.results_out_path, "capture.mp4")
+        self.flash_path = test_env.private_path / "bios.bin"
+        self.mcpx_path = test_env.private_path / "mcpx.bin"
+        self.hdd_path = cur_dir / "test.img"
+        self.mount_path = cur_dir / "xemu-hdd-mount"
+        self.iso_path = Path(iso_path)
+        self.results_in_path = self.mount_path / xbox_results_path
+        self.results_out_path = Path(results_out_path)
+        self.video_capture_path = self.results_out_path / "capture.mp4"
         self.timeout = timeout
         self.test_env = test_env
         self.ffmpeg = None
         self.xemu_exit_status = None
 
-        assert os.path.isfile(self.flash_path)
-        assert os.path.isfile(self.mcpx_path)
-        assert os.path.isfile(self.iso_path)
+        assert self.flash_path.is_file()
+        assert self.mcpx_path.is_file()
+        assert self.iso_path.is_file()
 
         if platform.system() == "Windows":
             self.app: Optional[pywinauto.application.Application] = None
@@ -108,16 +108,16 @@ class TestBase:
     def _prepare_hdd(self):
         log.info("Preparing HDD image")
         disk_size = 8 * 1024 * 1024 * 1024
-        if os.path.exists(self.hdd_path):
-            if os.path.getsize(self.hdd_path) != disk_size:
+        if self.hdd_path.exists():
+            if self.hdd_path.stat().st_size != disk_size:
                 raise FileExistsError(
                     "Target image path exists and is not expected size"
                 )
-            Fatx.format(self.hdd_path)
+            Fatx.format(str(self.hdd_path))
         else:
-            Fatx.create(self.hdd_path, disk_size)
+            Fatx.create(str(self.hdd_path), disk_size)
 
-        self.setup_hdd_files(Fatx(self.hdd_path))
+        self.setup_hdd_files(Fatx(str(self.hdd_path)))
 
     def _prepare_config(self):
         config = (
@@ -136,8 +136,7 @@ class TestBase:
             f"hdd_path = '{self.hdd_path}'\n"
         )
         log.info("Prepared config file:\n%s", config)
-        with open("xemu.toml", "w") as f:
-            f.write(config)
+        Path("xemu.toml").write_text(config)
 
     def _launch_video_capture(self):
         if not self.test_env.video_capture_enabled:
@@ -169,7 +168,7 @@ class TestBase:
                 "libx264",
                 "-pix_fmt",
                 "yuv420p",
-                self.video_capture_path,
+                str(self.video_capture_path),
                 "-y",
             ]
         else:
@@ -184,7 +183,7 @@ class TestBase:
                 "-f",
                 "x11grab",
                 "-i",
-                os.getenv("DISPLAY"),
+                os.environ.get("DISPLAY", ":0"),
                 "-c:v",
                 "libx264",
                 "-preset",
@@ -193,7 +192,7 @@ class TestBase:
                 "baseline",
                 "-pix_fmt",
                 "yuv420p",
-                self.video_capture_path,
+                str(self.video_capture_path),
                 "-y",
             ]
 
@@ -214,24 +213,24 @@ class TestBase:
 
         if platform.system() == "Windows":
             c = [
-                self.test_env.xemu_path,
+                str(self.test_env.xemu_path),
                 "-config_path",
                 "./xemu.toml",
                 "-dvd_path",
-                self.iso_path,
+                str(self.iso_path),
             ]
         else:
             c = [
-                self.test_env.xemu_path,
+                str(self.test_env.xemu_path),
                 "-config_path",
                 "./xemu.toml",
                 "-dvd_path",
-                self.iso_path,
+                str(self.iso_path),
             ]
             if not self.test_env.disable_fullscreen:
                 c.append("-full-screen")
         log.info(
-            "Launching xemu with command %s from directory %s", repr(c), os.getcwd()
+            "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )
         start = time.time()
         xemu = subprocess.Popen(c)
@@ -286,13 +285,13 @@ class TestBase:
 
     def _mount_hdd(self):
         log.info(f"Mounting HDD image {self.hdd_path} at {self.mount_path}")
-        if os.path.exists(self.mount_path):
+        if self.mount_path.exists():
             shutil.rmtree(self.mount_path)
-        os.makedirs(self.mount_path, exist_ok=True)
+        self.mount_path.mkdir(parents=True, exist_ok=True)
 
         # FIXME: Don't need to run here
         subprocess.run(
-            [sys.executable, "-m", "pyfatx", "-x", self.hdd_path],
+            [sys.executable, "-m", "pyfatx", "-x", str(self.hdd_path)],
             check=True,
             cwd=self.mount_path,
         )
@@ -307,9 +306,9 @@ class TestBase:
 
     def compare_images(
         self,
-        expected_path: str,
-        actual_path: str,
-        diff_result_path: Optional[str] = None,
+        expected_path: Union[str, Path],
+        actual_path: Union[str, Path],
+        diff_result_path: Optional[Union[str, Path]] = None,
     ) -> Tuple[bool, str]:
         """Perform a perceptual diff of the given images."""
         if not self.test_env.perceptualdiff_enabled:
@@ -324,8 +323,8 @@ class TestBase:
 
         c = [perceptualdiff_path, "--verbose"]
         if diff_result_path:
-            c.extend(["--output", diff_result_path])
-        c.extend([expected_path, actual_path])
+            c.extend(["--output", str(diff_result_path)])
+        c.extend([str(expected_path), str(actual_path)])
         result = subprocess.run(c, capture_output=True)
         return result.returncode == 0, result.stderr.decode("utf-8")
 
@@ -351,7 +350,7 @@ class TestBase:
         del fs
 
     def run(self):
-        os.makedirs(self.results_out_path, exist_ok=True)
+        self.results_out_path.mkdir(parents=True, exist_ok=True)
         self._prepare_roms()
         self._prepare_hdd()
         self._prepare_config()
@@ -362,4 +361,4 @@ class TestBase:
         try:
             self.analyze_results()
         finally:
-            self.teardown_hdd_files(Fatx(self.hdd_path))
+            self.teardown_hdd_files(Fatx(str(self.hdd_path)))

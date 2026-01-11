@@ -1,6 +1,7 @@
 """Test harness for test-xbe."""
 
-import os
+from pathlib import Path
+from typing import Union
 
 import test_base
 
@@ -11,11 +12,12 @@ class TestXBE(test_base.TestBase):
     def __init__(
         self,
         test_env: test_base.TestEnvironment,
-        results_path: str,
-        test_data_path: str,
+        results_path: Union[str, Path],
+        test_data_path: Union[str, Path],
     ):
-        iso_path = os.path.join(test_data_path, "tester.iso")
-        if not os.path.isfile(iso_path):
+        test_data_path = Path(test_data_path)
+        iso_path = test_data_path / "tester.iso"
+        if not iso_path.is_file():
             raise FileNotFoundError(
                 "Test data was not installed with the package. You need to build it and copy "
                 f"to {test_data_path}."
@@ -24,5 +26,5 @@ class TestXBE(test_base.TestBase):
         super().__init__(test_env, "results", results_path, iso_path)
 
     def analyze_results(self):
-        with open(os.path.join(self.results_out_path, "results.txt")) as f:
-            assert f.read().strip() == "Success"
+        results_file = self.results_out_path / "results.txt"
+        assert results_file.read_text().strip() == "Success"
