@@ -69,14 +69,14 @@ def main():
         test_data = test_data_root / test_name
         try:
             test = test_cls(test_env, test_results, test_data)
-        except:
+        except BaseException:
             log.exception("Test %d - %s setup failed!", i, test_name)
             result = False
             continue
         try:
             test.run()
             log.info("Test %d - %s passed!", i, test_name)
-        except:
+        except BaseException:
             log.exception("Test %d - %s failed!", i, test_name)
             result = False
 
