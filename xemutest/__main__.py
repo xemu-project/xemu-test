@@ -26,8 +26,7 @@ def main():
     )
     args = ap.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     tests = []
     result = True
@@ -47,9 +46,6 @@ def main():
 
     results_root = Path(args.results).expanduser().resolve()
     results_root.mkdir(parents=True, exist_ok=True)
-
-    log_file_name = results_root / "xemutest.log"
-    logging.basicConfig(filename=str(log_file_name), filemode="w", level=logging.INFO)
 
     if args.data:
         test_data_root = Path(args.data).expanduser()
