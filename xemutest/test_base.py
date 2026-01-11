@@ -8,7 +8,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 from pyfatx import Fatx
 
@@ -25,10 +24,10 @@ class TestEnvironment:
 
     def __init__(
         self,
-        private_path: Union[str, Path],
-        xemu_path: Union[str, Path],
-        ffmpeg_path: Optional[str],
-        perceptualdiff_path: Optional[str],
+        private_path: str | Path,
+        xemu_path: str | Path,
+        ffmpeg_path: str | None,
+        perceptualdiff_path: str | None,
         disable_fullscreen: bool = False,
     ):
         self.private_path = Path(private_path)
@@ -61,8 +60,8 @@ class TestBase:
         self,
         test_env: TestEnvironment,
         xbox_results_path: str,
-        results_out_path: Union[str, Path],
-        iso_path: Union[str, Path],
+        results_out_path: str | Path,
+        iso_path: str | Path,
         timeout: int = 60,
     ):
         cur_dir = Path.cwd()
@@ -85,7 +84,7 @@ class TestBase:
         assert self.iso_path.is_file()
 
         if platform.system() == "Windows":
-            self.app: Optional[pywinauto.application.Application] = None
+            self.app: pywinauto.application.Application | None = None
             self.record_x: int = 0
             self.record_y: int = 0
             self.record_w: int = 0
@@ -298,10 +297,10 @@ class TestBase:
 
     def compare_images(
         self,
-        expected_path: Union[str, Path],
-        actual_path: Union[str, Path],
-        diff_result_path: Optional[Union[str, Path]] = None,
-    ) -> Tuple[bool, str]:
+        expected_path: str | Path,
+        actual_path: str | Path,
+        diff_result_path: str | Path | None = None,
+    ) -> tuple[bool, str]:
         """Perform a perceptual diff of the given images."""
         if not self.test_env.perceptualdiff_enabled:
             return True, ""

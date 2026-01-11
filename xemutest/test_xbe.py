@@ -1,7 +1,6 @@
 """Test harness for test-xbe."""
 
 from pathlib import Path
-from typing import Union
 
 import test_base
 
@@ -12,8 +11,8 @@ class TestXBE(test_base.TestBase):
     def __init__(
         self,
         test_env: test_base.TestEnvironment,
-        results_path: Union[str, Path],
-        test_data_path: Union[str, Path],
+        results_path: str | Path,
+        test_data_path: str | Path,
     ):
         test_data_path = Path(test_data_path)
         iso_path = test_data_path / "tester.iso"
