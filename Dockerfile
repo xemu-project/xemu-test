@@ -117,4 +117,4 @@ COPY --from=build-xemutest /build/venv /venv
 
 ENTRYPOINT ["/docker_entry.sh"]
 
-CMD ["/venv/bin/python3", "-m", "xemutest", "--data", "/work/xemu-test/data", "/work/private", "/work/results"]
+CMD ["/venv/bin/python3", "-m", "xemutest", "--data", "/work/xemu-test/data", "xemu", "/work/private", "/work/results"]
