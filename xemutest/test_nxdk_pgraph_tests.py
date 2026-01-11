@@ -26,7 +26,9 @@ class TestNXDKPgraphTests(test_base.TestBase):
             msg = f"{iso_path} was not installed with the package. You need to build or download it."
             raise FileNotFoundError(msg)
 
-        self.golden_results_path = test_data_path / "nxdk_pgraph_tests_golden_results"
+        self.golden_results_path = (
+            test_data_path / "nxdk_pgraph_tests_golden_results" / "results"
+        )
         if not self.golden_results_path.is_dir():
             msg = f"{self.golden_results_path} was not installed with the package. Please check it out from Github."
             raise FileNotFoundError(msg)
