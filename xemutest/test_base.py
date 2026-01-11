@@ -244,7 +244,7 @@ class TestBase:
                 target_height = 480
 
                 rect = main_window.client_area_rect()
-                cx, cy, cw, ch = rect.left, rect.top, rect.width(), rect.height()
+                cw, ch = rect.width(), rect.height()
                 rect = main_window.rectangle()
                 x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
 
@@ -258,7 +258,7 @@ class TestBase:
                 self.record_y = y
                 self.record_w = w
                 self.record_h = h
-            except:
+            except:  # noqa:E722
                 log.exception("Failed to connect to xemu window")
                 self.app = None
 
