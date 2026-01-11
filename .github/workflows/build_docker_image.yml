@@ -68,7 +68,7 @@ jobs:
       - name: Get package info
         run: |
           echo "TAG_NAME=wheel-$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
-          echo "WHEEL_FILENAME=$(ls *.whl)" >> $GITHUB_ENV
+          echo "WHEEL_FILENAME=$(find ./dist/*.whl)" >> $GITHUB_ENV
 
       - name: Publish release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
