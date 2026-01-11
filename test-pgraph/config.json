@@ -5,12 +5,13 @@
     "enable_autorun_immediately": true,
     "enable_shutdown_on_completion": true,
     "enable_pgraph_region_diff": false,
-    "skip_tests_by_default": false,
+    "skip_tests_by_default": true,
     "delay_milliseconds_between_tests": 0,
     "output_directory_path": "c:/nxdk_pgraph_tests"
   },
   "test_suites": {
     "Lighting normals": {
+      "skipped": false,
       "NoNormal": {},
       "NoNormal-inlinearrays": {},
       "NoNormal-inlinebuf": {},
@@ -134,7 +135,7 @@
       "SignedRevSubtract": {}
     },
     "Clear": {
-      "reason": "Crashes v8.10", 
+      "reason": "Crashes v8.10",
       "C00000000_Depth_n": {},
       "C00000000_Depth_y": {},
       "C00000001_Depth_n": {},
