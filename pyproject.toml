@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xemutest"
+version = "0.0.7"
+description = "xemu Automated Tests"
+readme = "README.md"
+requires-python = ">=3.6"
+authors = [
+    {name = "Matt Borgerson", email = "contact@mborgerson.com"}
+]
+
+dependencies = [
+    "pyfatx >= 0.0.7",
+    "pywinauto; sys_platform == 'win32'",
+]
+
+[project.urls]
+Homepage = "https://github.com/xemu-project/xemu-test"
+
+[tool.setuptools.packages.find]
+include = ["xemutest*"]
+
+[tool.setuptools.package-data]
+xemutest = ["data/**/*"]
