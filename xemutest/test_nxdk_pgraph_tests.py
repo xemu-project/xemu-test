@@ -47,6 +47,10 @@ class TestNXDKPgraphTests(test_base.TestBase):
                 self.xemu_exit_status,
             )
 
+        if not self.test_env.perceptualdiff_enabled:
+            log.warning("Missing perceptual diff, skipping result analysis")
+            return
+
         diff_dir = "_diffs"
         diff_results_dir = self._prepare_diff_dir(diff_dir)
 
