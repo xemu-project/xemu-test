@@ -28,10 +28,39 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
+    this_dir = Path(__file__).resolve().parent
+    xemu_path = Path(args.xemu).expanduser().resolve()
+    private_path = Path(args.private).expanduser().resolve()
+    test_data_root = (
+        Path(args.data).expanduser().resolve() if args.data else (this_dir / "data")
+    )
+    ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
+    perceptualdiff_path = (
+        Path(args.perceptualdiff).expanduser().resolve()
+        if args.perceptualdiff
+        else None
+    )
+
+    # Validate required paths
+    errors = []
+    if not xemu_path.is_file():
+        errors.append(f"xemu binary not found: {xemu_path}")
+    if not private_path.is_dir():
+        errors.append(f"Private data directory not found: {private_path}")
+    if not test_data_root.is_dir():
+        errors.append(f"Test data directory not found: {test_data_root}")
+    if ffmpeg_path and not ffmpeg_path.is_file():
+        errors.append(f"ffmpeg binary not found: {ffmpeg_path}")
+    if perceptualdiff_path and not perceptualdiff_path.is_file():
+        errors.append(f"perceptualdiff binary not found: {perceptualdiff_path}")
+    if errors:
+        for error in errors:
+            log.error(error)
+        sys.exit(1)
+
     tests = []
     result = True
 
-    this_dir = Path(__file__).resolve().parent
     sys.path.append(str(this_dir))
     for path in this_dir.iterdir():
         if not path.name.startswith("test_") or path.name == "test_base.py":
@@ -47,17 +76,11 @@ def main():
     results_root = Path(args.results).expanduser().resolve()
     results_root.mkdir(parents=True, exist_ok=True)
 
-    if args.data:
-        test_data_root = Path(args.data).expanduser()
-    else:
-        test_data_root = this_dir / "data"
-    xemu_path = Path(args.xemu).expanduser().resolve()
-
     test_env = xemutest.TestEnvironment(
-        Path(args.private).expanduser().resolve(),
+        private_path,
         xemu_path,
-        args.ffmpeg,
-        args.perceptualdiff,
+        ffmpeg_path,
+        perceptualdiff_path,
         args.no_fullscreen,
     )
 
