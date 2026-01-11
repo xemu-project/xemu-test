@@ -59,13 +59,11 @@ jobs:
       - name: Build Test Data
         run: bash ./scripts/build_test_data.sh
 
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+
       - name: Build wheel
-        run: |
-          pip install wheel
-          pip install .
-          mkdir /tmp/wheels
-          pip wheel -w /tmp/wheels .
-          mv /tmp/wheels/xemutest-*.whl .
+        run: uv build
 
       - name: Get package info
         run: |
