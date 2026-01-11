@@ -109,21 +109,25 @@ class TestBase:
         self.setup_hdd_files(Fatx(str(self.hdd_path)))
 
     def _prepare_config(self):
-        config = (
-            "[general]\n"
-            "show_welcome = false\n"
-            "skip_boot_anim = true\n"
-            "[general.updates]\n"
-            "check = false\n"
-            "[net]\n"
-            "enable = false\n"
-            "[sys]\n"
-            "mem_limit = '64'\n"
-            "[sys.files]\n"
-            f"bootrom_path = '{self.mcpx_path}'\n"
-            f"flashrom_path = '{self.flash_path}'\n"
-            f"hdd_path = '{self.hdd_path}'\n"
-        )
+        config = f"""\
+[general]
+show_welcome = false
+skip_boot_anim = true
+
+[general.updates]
+check = false
+
+[net]
+enable = false
+
+[sys]
+mem_limit = '64'
+
+[sys.files]
+bootrom_path = '{self.mcpx_path}'
+flashrom_path = '{self.flash_path}'
+hdd_path = '{self.hdd_path}'
+"""
         log.info("Prepared config file:\n%s", config)
         Path("xemu.toml").write_text(config)
 
