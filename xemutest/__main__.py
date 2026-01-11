@@ -17,9 +17,6 @@ def main():
     ap.add_argument("results", help="Path to directory where results should go")
     ap.add_argument("--data", help="Path to test data (e.g., disc images)")
     ap.add_argument("--ffmpeg", help="Path to the ffmpeg binary")
-    ap.add_argument(
-        "--no-fullscreen", action="store_true", help="Force xemu to run in a window"
-    )
     ap.add_argument("--perceptualdiff", help="Path to the perceptualdiff binary")
     ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
@@ -81,7 +78,6 @@ def main():
         xemu_path,
         ffmpeg_path,
         perceptualdiff_path,
-        args.no_fullscreen,
     )
 
     for i, (test_name, test_cls) in enumerate(tests):

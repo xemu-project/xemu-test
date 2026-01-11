@@ -28,13 +28,11 @@ class TestEnvironment:
         xemu_path: str | Path,
         ffmpeg_path: Path | None,
         perceptualdiff_path: Path | None,
-        disable_fullscreen: bool = False,
     ):
         self.private_path = Path(private_path)
         self.xemu_path = Path(xemu_path)
         self.ffmpeg_path = ffmpeg_path
         self.perceptualdiff_path = perceptualdiff_path
-        self.disable_fullscreen = disable_fullscreen
 
     @property
     def video_capture_enabled(self) -> bool:
@@ -218,8 +216,6 @@ class TestBase:
                 "-dvd_path",
                 str(self.iso_path),
             ]
-            if not self.test_env.disable_fullscreen:
-                c.append("-full-screen")
         log.info(
             "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )
