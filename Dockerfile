@@ -24,7 +24,7 @@ WORKDIR /work
 
 RUN mkdir -p /data/TestNXDKPgraphTests
 RUN curl \
-    -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2025-01-23_02-07-06-535990005/nxdk_pgraph_tests_xiso.iso \
+    -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2026-01-08_17-34-01-989184157/nxdk_pgraph_tests_xiso.iso \
     --output clean_nxdk_pgraph_tests_xiso.iso
 
 RUN cp /usr/src/nxdk/tools/extract-xiso/build/extract-xiso /bin \
