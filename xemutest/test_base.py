@@ -114,6 +114,9 @@ class TestBase:
 show_welcome = false
 skip_boot_anim = true
 
+[display.ui]
+show_menubar = false
+
 [general.updates]
 check = false
 
