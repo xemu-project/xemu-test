@@ -5,13 +5,12 @@
     "enable_autorun_immediately": true,
     "enable_shutdown_on_completion": true,
     "enable_pgraph_region_diff": false,
-    "skip_tests_by_default": true,
+    "skip_tests_by_default": false,
     "delay_milliseconds_between_tests": 0,
     "output_directory_path": "c:/nxdk_pgraph_tests"
   },
   "test_suites": {
     "Lighting normals": {
-      "skipped": false,
       "NoNormal": {},
       "NoNormal-inlinearrays": {},
       "NoNormal-inlinebuf": {},
@@ -42,7 +41,6 @@
       "Nz_97-inlineelements": {}
     },
     "Antialiasing tests": {
-      "skipped": false,
       "AAOnThenOffCPUWrite": {},
       "CPUWriteIgnoresSurfaceConfig": {},
       "CreateSurfaceWithCenter1": {},
