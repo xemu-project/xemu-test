@@ -11,4 +11,4 @@ docker build --target $target -t $image .
 container=$(docker create $image "")
 docker cp $container:/data xemutest/
 docker rm $container
-docker rmi $image
+docker rmi -f $image
