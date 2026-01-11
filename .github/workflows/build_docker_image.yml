@@ -68,9 +68,7 @@ jobs:
         run: uv build
 
       - name: Get package info
-        run: |
-          echo "TAG_NAME=wheel-$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
-          echo "WHEEL_FILENAME=$(find ./dist/*.whl)" >> $GITHUB_ENV
+        run: echo "TAG_NAME=wheel-$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
 
       - name: Publish release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -80,7 +78,7 @@ jobs:
           name: ${{ env.TAG_NAME }}
           prerelease: false
           draft: false
-          files: ${{ env.WHEEL_FILENAME }}
+          files: ./dist/*
       - name: Drop outdated wheels
         uses: dev-drprasad/delete-older-releases@v0.3.4
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
