@@ -12,10 +12,10 @@ log = logging.getLogger(__file__)
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("xemu", help="Path to the xemu binary")
     ap.add_argument("private", help="Path to private data files")
     ap.add_argument("results", help="Path to directory where results should go")
     ap.add_argument("--data", help="Path to test data (e.g., disc images)")
-    ap.add_argument("--xemu", help="Path to the xemu binary")
     ap.add_argument("--ffmpeg", help="Path to the ffmpeg binary or DISABLE")
     ap.add_argument(
         "--no-fullscreen", action="store_true", help="Force xemu to run in a window"
@@ -57,9 +57,7 @@ def main():
         test_data_root = Path(args.data).expanduser()
     else:
         test_data_root = this_dir / "data"
-    xemu_path = args.xemu
-    if xemu_path:
-        xemu_path = Path(xemu_path).expanduser().resolve()
+    xemu_path = Path(args.xemu).expanduser().resolve()
 
     test_env = xemutest.TestEnvironment(
         Path(args.private).expanduser().resolve(),

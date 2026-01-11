@@ -26,21 +26,13 @@ class TestEnvironment:
     def __init__(
         self,
         private_path: Union[str, Path],
-        xemu_path: Optional[Union[str, Path]],
+        xemu_path: Union[str, Path],
         ffmpeg_path: Optional[str],
         perceptualdiff_path: Optional[str],
         disable_fullscreen: bool = False,
     ):
         self.private_path = Path(private_path)
-
-        if not xemu_path:
-            if platform.system() == "Windows":
-                self.xemu_path = Path.cwd() / "xemu.exe"
-            else:
-                self.xemu_path = Path("xemu")
-        else:
-            self.xemu_path = Path(xemu_path)
-
+        self.xemu_path = Path(xemu_path)
         self.ffmpeg_path = ffmpeg_path
         self.perceptualdiff_path = perceptualdiff_path
         self.disable_fullscreen = disable_fullscreen
