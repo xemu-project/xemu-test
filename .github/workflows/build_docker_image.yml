@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Clone Tree
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -52,7 +52,7 @@ jobs:
           python-version: '3.9'
 
       - name: Clone Tree
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
