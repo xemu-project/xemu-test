@@ -199,23 +199,13 @@ class TestBase:
         self.ffmpeg.communicate(b"q\n", timeout=5)
 
     def _launch_xemu(self):
-
-        if platform.system() == "Windows":
-            c = [
-                str(self.test_env.xemu_path),
-                "-config_path",
-                "./xemu.toml",
-                "-dvd_path",
-                str(self.iso_path),
-            ]
-        else:
-            c = [
-                str(self.test_env.xemu_path),
-                "-config_path",
-                "./xemu.toml",
-                "-dvd_path",
-                str(self.iso_path),
-            ]
+        c = [
+            str(self.test_env.xemu_path),
+            "-config_path",
+            "./xemu.toml",
+            "-dvd_path",
+            str(self.iso_path),
+        ]
         log.info(
             "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )
