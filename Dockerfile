@@ -55,8 +55,7 @@ RUN apt-get -qy install \
         ;
 
 WORKDIR /build
-COPY ./xemutest /work/xemu-test/xemutest/
-COPY ./setup.py /work/xemu-test
+COPY . /work/xemu-test
 RUN python3 -m venv venv \
     && . venv/bin/activate \
     && pip install /work/xemu-test \
