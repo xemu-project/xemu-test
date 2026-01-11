@@ -53,7 +53,8 @@ class TestNXDKPgraphTests(test_base.TestBase):
         # Walk all directories including root
         dirs_to_check = [self.results_out_path]
         dirs_to_check.extend(
-            d for d in self.results_out_path.rglob("*")
+            d
+            for d in self.results_out_path.rglob("*")
             if d.is_dir() and diff_dir not in d.parts
         )
 

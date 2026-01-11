@@ -20,9 +20,7 @@ def main():
     ap.add_argument(
         "--no-fullscreen", action="store_true", help="Force xemu to run in a window"
     )
-    ap.add_argument(
-        "--perceptualdiff", help="Path to the perceptualdiff binary"
-    )
+    ap.add_argument("--perceptualdiff", help="Path to the perceptualdiff binary")
     ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
