@@ -37,7 +37,7 @@ RUN extract-xiso -c clean_nxdk_pgraph_tests_xiso nxdk_pgraph_tests_xiso.iso \
 RUN git clone --depth 1 https://github.com/abaire/nxdk_pgraph_tests_golden_results.git /data/TestNXDKPgraphTests/nxdk_pgraph_tests_golden_results
 
 
-FROM ubuntu:24.10 AS ubuntu-base
+FROM ubuntu:25.10 AS ubuntu-base
 RUN set -xe; \
     apt-get -qy update \
     && apt-get -qy install \
