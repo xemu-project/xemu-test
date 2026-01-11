@@ -33,17 +33,17 @@ class TestEnvironment:
     ):
         self.private_path = Path(private_path)
         self.xemu_path = Path(xemu_path)
-        self.ffmpeg_path = ffmpeg_path
-        self.perceptualdiff_path = perceptualdiff_path
+        self.ffmpeg_path = Path(ffmpeg_path).expanduser().resolve() if ffmpeg_path else None
+        self.perceptualdiff_path = Path(perceptualdiff_path).expanduser().resolve() if perceptualdiff_path else None
         self.disable_fullscreen = disable_fullscreen
 
     @property
     def video_capture_enabled(self) -> bool:
-        return self.ffmpeg_path != "DISABLE"
+        return self.ffmpeg_path is not None
 
     @property
     def perceptualdiff_enabled(self) -> bool:
-        return self.perceptualdiff_path != "DISABLE"
+        return self.perceptualdiff_path is not None
 
 
 class TestBase:
