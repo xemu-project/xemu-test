@@ -80,7 +80,7 @@ jobs:
           draft: false
           files: ${{ env.WHEEL_FILENAME }}
       - name: Drop outdated wheels
-        uses: dev-drprasad/delete-older-releases@v0.2.0
+        uses: dev-drprasad/delete-older-releases@v0.3.4
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           keep_latest: 1
