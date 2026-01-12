@@ -24,8 +24,8 @@ class TestEnvironment:
 
     def __init__(
         self,
-        private_path: str | Path,
-        xemu_path: str | Path,
+        private_path: Path,
+        xemu_path: Path,
         ffmpeg_path: Path | None,
         perceptualdiff_path: Path | None,
     ):
@@ -58,8 +58,8 @@ class TestBase:
         self,
         test_env: TestEnvironment,
         xbox_results_path: str,
-        results_out_path: str | Path,
-        iso_path: str | Path,
+        results_out_path: Path,
+        iso_path: Path,
         timeout: int = 60,
     ):
         cur_dir = Path.cwd()
@@ -68,7 +68,7 @@ class TestBase:
         self.mcpx_path = test_env.private_path / "mcpx.bin"
         self.hdd_path = cur_dir / "test.img"
         self.mount_path = cur_dir / "xemu-hdd-mount"
-        self.iso_path = Path(iso_path)
+        self.iso_path = iso_path
         self.results_in_path = self.mount_path / xbox_results_path
         self.results_out_path = Path(results_out_path)
         self.video_capture_path = self.results_out_path / "capture.mp4"

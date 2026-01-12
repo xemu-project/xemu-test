@@ -11,10 +11,9 @@ class TestXBE(test_base.TestBase):
     def __init__(
         self,
         test_env: test_base.TestEnvironment,
-        results_path: str | Path,
-        test_data_path: str | Path,
+        results_path: Path,
+        test_data_path: Path,
     ):
-        test_data_path = Path(test_data_path)
         iso_path = test_data_path / "tester.iso"
         if not iso_path.is_file():
             raise FileNotFoundError(
