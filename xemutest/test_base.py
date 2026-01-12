@@ -76,6 +76,7 @@ class TestBase:
         self.test_env = test_env
         self.ffmpeg = None
         self.xemu_exit_status = None
+        self.xemu_config_addend = ""
 
         assert self.flash_path.is_file()
         assert self.mcpx_path.is_file()
@@ -130,6 +131,8 @@ mem_limit = '64'
 bootrom_path = '{self.mcpx_path}'
 flashrom_path = '{self.flash_path}'
 hdd_path = '{self.hdd_path}'
+
+{self.xemu_config_addend}
 """
         log.info("Prepared config file:\n%s", config)
         Path("xemu.toml").write_text(config)

@@ -5,6 +5,7 @@ import shutil
 import re
 import logging
 from dataclasses import dataclass, field
+import sys
 from typing import NamedTuple
 from pathlib import Path
 
@@ -37,14 +38,13 @@ class NxdkPgraphTestExecutor(test_base.TestBase):
         test_env: test_base.TestEnvironment,
         results_path: Path,
         test_data_path: Path,
-        config,
+        suite_config,
     ) -> None:
-        test_data_path = Path(test_data_path)
         iso_path = test_data_path / "nxdk_pgraph_tests_xiso.iso"
         if not iso_path.is_file():
             msg = f"{iso_path} was not installed with the package. You need to build or download it."
             raise FileNotFoundError(msg)
-        self.config = config
+        self.suite_config = suite_config
 
         super().__init__(
             test_env, "nxdk_pgraph_tests", results_path, iso_path, TIMEOUT_SECONDS
@@ -53,12 +53,12 @@ class NxdkPgraphTestExecutor(test_base.TestBase):
     def setup_hdd_files(self, fs: test_base.Fatx):
         super().setup_hdd_files(fs)  # Releases fs
 
-        log.info("Writing config: %r", self.config)
+        log.info("Writing config: %r", self.suite_config)
         fs_e = Fatx(str(self.hdd_path), drive="e")
         fs_e.mkdir("/nxdk_pgraph_tests")
         fs_e.write(
             "/nxdk_pgraph_tests/nxdk_pgraph_tests_config.json",
-            json.dumps(self.config, indent=2).encode("utf-8"),
+            json.dumps(self.suite_config, indent=2).encode("utf-8"),
         )
         del fs_e
 
@@ -108,6 +108,20 @@ class TestNxdkPgraphTests(test_base.TestBase):
         )
 
     def run(self):
+        renderers_to_test = ["OPENGL"]
+        if sys.platform != "darwin":
+            renderers_to_test.append("VULKAN")
+
+        for renderer in renderers_to_test:
+            xemu_config_addend = f"""
+[display]
+renderer = '{renderer}'
+"""
+
+            run_name = renderer.lower()
+            self.run_suite(run_name, xemu_config_addend)
+
+    def run_suite(self, run_name, xemu_config_addend=""):
         num_iterations = 0
         tests_completed = []
         tests_failed = []
@@ -115,14 +129,15 @@ class TestNxdkPgraphTests(test_base.TestBase):
         should_run = True
 
         while should_run:
-            results_path = self.results_path / f"iteration_{num_iterations}"
+            results_path = self.results_path / run_name / f"iteration_{num_iterations}"
 
             executor = NxdkPgraphTestExecutor(
                 self.test_env,
                 results_path,
                 self.test_data_path,
-                config=self._build_pgraph_test_config(tests_to_skip=tests_ran),
+                suite_config=self._build_pgraph_test_config(tests_to_skip=tests_ran),
             )
+            executor.xemu_config_addend = xemu_config_addend
             executor.run()
 
             progress_analysis = self._analyze_pgraph_progress_log(
@@ -257,7 +272,7 @@ class TestNxdkPgraphTests(test_base.TestBase):
             if not file.endswith(".png"):
                 continue
 
-            path_relative_to_iteration = Path(*root_relative_to_out_path.parts[1:])
+            path_relative_to_iteration = Path(*root_relative_to_out_path.parts[2:])
             expected_path = (
                 self.golden_results_path / path_relative_to_iteration / file
             ).resolve()
