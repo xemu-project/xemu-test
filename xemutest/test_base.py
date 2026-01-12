@@ -286,6 +286,7 @@ hdd_path = '{self.hdd_path}'
     def _copy_results(self):
         log.info("Copying test results...")
         shutil.copytree(self.results_in_path, self.results_out_path, dirs_exist_ok=True)
+        shutil.copy2("xemu.toml", self.results_out_path)
 
     def _unmount_hdd(self):
         log.info("Unmounting HDD image")
