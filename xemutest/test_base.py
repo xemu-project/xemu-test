@@ -216,8 +216,10 @@ hdd_path = '{self.hdd_path}'
         log.info(
             "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )
+        self.results_out_path.mkdir(parents=True, exist_ok=True)
+        self.xemu_log_file = open(self.results_out_path / "xemu.log", "w")
         start = time.time()
-        xemu = subprocess.Popen(c)
+        xemu = subprocess.Popen(c, stdout=self.xemu_log_file, stderr=subprocess.STDOUT)
 
         if platform.system() == "Windows":
             try:
@@ -265,6 +267,7 @@ hdd_path = '{self.hdd_path}'
                 break
             time.sleep(1)
 
+        self.xemu_log_file.close()
         self._terminate_video_capture()
 
     def _mount_hdd(self):
