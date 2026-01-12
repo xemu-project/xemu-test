@@ -22,20 +22,11 @@ RUN apk add --upgrade --no-cache curl libcurl git
 
 WORKDIR /work
 
-RUN mkdir -p /data/TestNXDKPgraphTests
+RUN mkdir -p /data/TestNxdkPgraphTests
 RUN curl \
     -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2026-01-08_17-34-01-989184157/nxdk_pgraph_tests_xiso.iso \
-    --output clean_nxdk_pgraph_tests_xiso.iso
-
-RUN cp /usr/src/nxdk/tools/extract-xiso/build/extract-xiso /bin \
-    && extract-xiso -x clean_nxdk_pgraph_tests_xiso.iso
-COPY test-pgraph/config.json clean_nxdk_pgraph_tests_xiso/nxdk_pgraph_tests_config.json
-RUN extract-xiso -c clean_nxdk_pgraph_tests_xiso nxdk_pgraph_tests_xiso.iso \
-    && mv nxdk_pgraph_tests_xiso.iso /data/TestNXDKPgraphTests/ \
-    ;
-
-RUN git clone --depth 1 https://github.com/abaire/nxdk_pgraph_tests_golden_results.git /data/TestNXDKPgraphTests/nxdk_pgraph_tests_golden_results
-
+    --output /data/TestNxdkPgraphTests/nxdk_pgraph_tests_xiso.iso
+RUN git clone --depth 1 https://github.com/abaire/nxdk_pgraph_tests_golden_results.git /data/TestNxdkPgraphTests/nxdk_pgraph_tests_golden_results
 
 FROM ubuntu:25.10 AS ubuntu-base
 RUN set -xe; \
@@ -95,7 +86,7 @@ RUN apt-get -qy install \
 # Combine test data
 FROM scratch AS data
 COPY --from=test-xbe-data /data /data
-COPY --from=pgraph-data /data/TestNXDKPgraphTests /data/TestNXDKPgraphTests
+COPY --from=pgraph-data /data/TestNxdkPgraphTests /data/TestNxdkPgraphTests
 
 #
 # Build final test container
