@@ -8,7 +8,7 @@ import sys
 from typing import NamedTuple
 from pathlib import Path
 
-from xemutest import GoldenImageComparator, TestBase, Environment, XemuTestBase
+from xemutest import ci, GoldenImageComparator, TestBase, Environment, XemuTestBase
 
 log = logging.getLogger(__name__)
 
@@ -81,51 +81,63 @@ class TestNxdkPgraphTests(TestBase):
     def _get_xemu_config_addend(renderer):
         return f"""
 [display]
-renderer = '{renderer}'
+renderer = '{renderer.upper()}'
 """
 
     def _run(self):
-        renderers_to_test = ["OPENGL"]
+        renderers_to_test = ["opengl"]
         if sys.platform != "darwin":
-            renderers_to_test.append("VULKAN")
+            renderers_to_test.append("vulkan")
 
         for renderer in renderers_to_test:
-            self._run_suite(renderer.lower(), self._get_xemu_config_addend(renderer))
+            num_iterations = 0
+            tests_completed = []
+            tests_failed = []
+            tests_ran = []
+            should_run = True
 
-    def _run_suite(self, run_name, xemu_config_addend=""):
-        num_iterations = 0
-        tests_completed = []
-        tests_failed = []
-        tests_ran = []
-        should_run = True
+            with ci.log_group(f"Renderer: {renderer}"):
+                while should_run:
+                    results_path = (
+                        self.results_path / renderer / f"iteration_{num_iterations}"
+                    )
 
-        while should_run:
-            results_path = self.results_path / run_name / f"iteration_{num_iterations}"
+                    executor = NxdkPgraphTestExecutor(
+                        self.test_env,
+                        results_path,
+                        self.test_data_path,
+                        suite_config=self._build_pgraph_test_config(
+                            tests_to_skip=tests_ran
+                        ),
+                    )
+                    executor.xemu_manager.config += self._get_xemu_config_addend(
+                        renderer
+                    )
+                    executor.run()
 
-            executor = NxdkPgraphTestExecutor(
-                self.test_env,
-                results_path,
-                self.test_data_path,
-                suite_config=self._build_pgraph_test_config(tests_to_skip=tests_ran),
-            )
-            executor.xemu_manager.config += xemu_config_addend
-            executor.run()
+                    progress_analysis = self._analyze_pgraph_progress_log(
+                        results_path / "pgraph_progress_log.txt"
+                    )
+                    tests_completed.extend(progress_analysis.tests_completed)
+                    tests_failed.extend(progress_analysis.tests_failed)
+                    tests_ran.extend(progress_analysis.tests_completed)
+                    tests_ran.extend(progress_analysis.tests_failed)
 
-            progress_analysis = self._analyze_pgraph_progress_log(
-                results_path / "pgraph_progress_log.txt"
-            )
-            tests_completed.extend(progress_analysis.tests_completed)
-            tests_failed.extend(progress_analysis.tests_failed)
-            tests_ran.extend(progress_analysis.tests_completed)
-            tests_ran.extend(progress_analysis.tests_failed)
+                    log.info(
+                        "Iteration %d: %d completed, %d failed",
+                        num_iterations,
+                        len(progress_analysis.tests_completed),
+                        len(progress_analysis.tests_failed),
+                    )
 
-            num_iterations += 1
-            should_run = bool(
-                progress_analysis.tests_failed or progress_analysis.tests_completed
-            )
+                    num_iterations += 1
+                    should_run = bool(
+                        progress_analysis.tests_failed
+                        or progress_analysis.tests_completed
+                    )
 
-        for test in tests_failed:
-            log.error("%s::%s failed", test.suite, test.name)
+                for test in tests_failed:
+                    log.error("%s - %s did not complete!", test.suite, test.name)
 
     @staticmethod
     def _build_pgraph_test_config(
@@ -202,19 +214,25 @@ renderer = '{renderer}'
 
     def analyze_results(self):
         """Processes the generated image files, diffing against the golden result set."""
+        with ci.log_group("Analyzing results (golden image comparison)"):
 
-        def path_transform(root_relative_to_out_path: Path) -> Path:
-            """Transform results path to golden path by skipping renderer/iteration dirs."""
-            return Path(*root_relative_to_out_path.parts[2:])
+            def path_transform(root_relative_to_out_path: Path) -> Path:
+                """Transform results path to golden path by skipping renderer/iteration dirs."""
+                return Path(*root_relative_to_out_path.parts[2:])
 
-        comparator = GoldenImageComparator(
-            self.test_env,
-            self.results_path,
-            self.golden_results_path,
-        )
+            comparator = GoldenImageComparator(
+                self.test_env,
+                self.results_path,
+                self.golden_results_path,
+            )
 
-        failed_comparisons = comparator.compare_all(path_transform=path_transform)
+            failed_comparisons = comparator.compare_all(path_transform=path_transform)
 
-        if failed_comparisons:
-            msg = f"Failed {len(failed_comparisons)} comparisons: {failed_comparisons}"
-            raise Exception(msg)
+            if failed_comparisons:
+                for path, message in failed_comparisons.items():
+                    ci.error(
+                        f"Image mismatch: {path} - {message}",
+                        title="Golden Image Comparison",
+                    )
+                msg = f"Failed {len(failed_comparisons)} comparisons"
+                raise Exception(msg)

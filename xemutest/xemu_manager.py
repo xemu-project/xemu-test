@@ -117,7 +117,10 @@ hdd_path = '{self.hdd_path}'
         while True:
             status = xemu.poll()
             if status is not None:
-                log.info("xemu exited %d", status)
+                if status:
+                    log.error("xemu exited with code %d", status)
+                else:
+                    log.info("xemu exited with code 0")
                 self.exit_status = status
                 break
             now = time.time()

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from xemutest import Environment, TestBase
+from xemutest import ci
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,10 @@ def main():
     args = ap.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+
+    # Add GitHub Actions annotation handler for warnings/errors
+    if ci.is_github_actions():
+        logging.getLogger().addHandler(ci.GitHubActionsHandler())
 
     this_dir = Path(__file__).resolve().parent
     xemu_path = Path(args.xemu).expanduser().resolve()
@@ -80,17 +85,35 @@ def main():
         perceptualdiff_path,
     )
 
+    test_results_summary: dict[str, bool] = {}
+
     for i, (test_name, test_cls) in enumerate(tests):
         test_results = results_root / test_name
         test_data = test_data_root / test_name
-        try:
-            log.info("Test %d - %s: Starting", i, test_name)
-            test = test_cls(test_env, test_results, test_data)
-            test.run()
-            log.info("Test %d - %s: Finished", i, test_name)
-        except BaseException:
-            log.exception("Test %d - %s: Failed", i, test_name)
-            result = False
+        with ci.log_group(f"Test {i}: {test_name}"):
+            try:
+                log.info("Test %d - %s: Starting", i, test_name)
+                test = test_cls(test_env, test_results, test_data)
+                test.run()
+                log.info("Test %d - %s: Finished", i, test_name)
+                test_results_summary[test_name] = True
+            except BaseException:
+                log.exception("Test %d - %s: Failed", i, test_name)
+                test_results_summary[test_name] = False
+                result = False
+
+    # Write job summary for GitHub Actions
+    if ci.is_github_actions():
+        summary = ci.JobSummary()
+        summary.add_heading("xemu Test Results")
+        summary.add_table(
+            headers=["Test", "Status"],
+            rows=[
+                [name, "✅ Passed" if passed else "❌ Failed"]
+                for name, passed in test_results_summary.items()
+            ],
+        )
+        summary.write()
 
     exit(0 if result else 1)
 
