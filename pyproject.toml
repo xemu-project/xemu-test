@@ -14,7 +14,7 @@ authors = [
 
 dependencies = [
     "pyfatx >= 0.0.7",
-    "pywinauto; sys_platform == 'win32'",
+    "pywinauto == 0.6.9; sys_platform == 'win32'",
 ]
 
 [project.urls]
