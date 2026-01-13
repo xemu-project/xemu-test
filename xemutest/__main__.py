@@ -24,6 +24,7 @@ def main():
     args = ap.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    logging.getLogger("pyfatx").setLevel(logging.WARNING)
 
     # Add GitHub Actions annotation handler for warnings/errors
     if ci.is_github_actions():
