@@ -27,7 +27,7 @@ jobs:
           Invoke-WebRequest -Uri $asset.browser_download_url -OutFile release.zip -MaximumRedirection 10
           Expand-Archive -LiteralPath release.zip -DestinationPath $env:GITHUB_WORKSPACE -Force
       - name: Setup venv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
         with:
           activate-environment: true
           python-version: "3.14"
@@ -40,7 +40,7 @@ jobs:
           $results = Join-Path $pwd "results"
           python -m xemutest $xemuExe $env:XEMU_PRIVATE $results
       - name: Upload results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: '!cancelled()'
         with:
           name: results
