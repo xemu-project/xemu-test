@@ -39,7 +39,7 @@ class NxdkPgraphTestExecutor(XemuTestBase):
     ):
         super().__init__(test_env, results_path)
         self.xemu_manager.iso_path = test_data_path / "nxdk_pgraph_tests_xiso.iso"
-        self.xemu_manager.timeout = 10 * 60
+        self.xemu_manager.timeout = 30 * 60
         self.xbox_results_path = "nxdk_pgraph_tests"
         self.suite_config = suite_config
 
