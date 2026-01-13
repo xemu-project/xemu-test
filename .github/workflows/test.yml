@@ -1,0 +1,47 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Build]
+    branches: [master]
+    types: [completed]
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, windows-11]
+    environment: testing
+    steps:
+      - name: Clear workspace
+        run: |
+          Get-ChildItem -Path $env:GITHUB_WORKSPACE | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+      - name: Download xemu build
+        run: |
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/xemu-project/xemu/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -like "xemu-*-windows-x86_64.zip" } | Select-Object -First 1
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile release.zip -MaximumRedirection 10
+          Expand-Archive -LiteralPath release.zip -DestinationPath $env:GITHUB_WORKSPACE -Force
+      - name: Setup venv
+        uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
+          python-version: "3.14"
+      - name: Setup xemu-test
+        run: |
+          uv pip install --no-cache "https://github.com/xemu-project/xemu-test/releases/latest/download/xemutest-0.0.7-py3-none-any.whl"
+      - name: Run tests
+        run: |
+          $xemuExe = Join-Path $pwd "xemu.exe"
+          $results = Join-Path $pwd "results"
+          python -m xemutest $xemuExe $env:XEMU_PRIVATE $results
+      - name: Upload results
+        uses: actions/upload-artifact@v6
+        if: '!cancelled()'
+        with:
+          name: results
+          path: results
