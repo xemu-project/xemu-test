@@ -74,7 +74,7 @@ hdd_path = '{self.hdd_path}'
         c = [str(self.test_env.xemu_path), "-config_path", str(self.config_path)]
         if self.iso_path:
             c += ["-dvd_path", str(self.iso_path)]
-        log.info(
+        log.debug(
             "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )
         start = time.time()
@@ -101,7 +101,7 @@ hdd_path = '{self.hdd_path}'
                 )
                 rect = main_window.client_area_rect()
                 x, y, w, h = rect.left, rect.top, rect.width(), rect.height()
-                log.info("xemu window is at %d,%d w=%d,h=%d", x, y, w, h)
+                log.debug("xemu window is at %d,%d w=%d,h=%d", x, y, w, h)
 
                 if self.video_capture:
                     self.video_capture.set_capture_region(x, y, w, h)
@@ -120,7 +120,7 @@ hdd_path = '{self.hdd_path}'
                 if status:
                     log.error("xemu exited with code %d", status)
                 else:
-                    log.info("xemu exited with code 0")
+                    log.debug("xemu exited with code 0")
                 self.exit_status = status
                 break
             now = time.time()

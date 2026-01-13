@@ -18,7 +18,7 @@ class HddManager:
 
     def prepare(self, disk_size: int = 8 * 1024 * 1024 * 1024):
         """Create or format the HDD image."""
-        log.info("Preparing HDD image")
+        log.debug("Preparing HDD image")
         if self.hdd_path.exists():
             if self.hdd_path.stat().st_size != disk_size:
                 raise FileExistsError(
