@@ -5,9 +5,9 @@ import logging
 import sys
 from pathlib import Path
 
-import xemutest
+from xemutest import Environment, TestBase
 
-log = logging.getLogger(__file__)
+log = logging.getLogger(__name__)
 
 
 def main():
@@ -15,7 +15,6 @@ def main():
     ap.add_argument("xemu", help="Path to the xemu binary")
     ap.add_argument("private", help="Path to private data files")
     ap.add_argument("results", help="Path to directory where results should go")
-    ap.add_argument("--data", help="Path to test data (e.g., disc images)")
     ap.add_argument("--ffmpeg", help="Path to the ffmpeg binary")
     ap.add_argument("--perceptualdiff", help="Path to the perceptualdiff binary")
     ap.add_argument(
@@ -28,9 +27,7 @@ def main():
     this_dir = Path(__file__).resolve().parent
     xemu_path = Path(args.xemu).expanduser().resolve()
     private_path = Path(args.private).expanduser().resolve()
-    test_data_root = (
-        Path(args.data).expanduser().resolve() if args.data else (this_dir / "data")
-    )
+    test_data_root = this_dir / "data"
     ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
     perceptualdiff_path = (
         Path(args.perceptualdiff).expanduser().resolve()
@@ -58,22 +55,25 @@ def main():
     tests = []
     result = True
 
-    sys.path.append(str(this_dir))
-    for path in this_dir.iterdir():
-        if not path.name.startswith("test_") or path.name == "test_base.py":
-            continue
-        if path.suffix != ".py":
+    tests_dir = this_dir / "tests"
+    sys.path.append(str(tests_dir))
+    for path in tests_dir.iterdir():
+        if not path.name.startswith("test_") or path.suffix != ".py":
             continue
 
         module = importlib.import_module(path.stem)
         for test_name, test_class in inspect.getmembers(module, inspect.isclass):
-            if test_name.startswith("Test"):
+            if (
+                test_name.startswith("Test")
+                and issubclass(test_class, TestBase)
+                and test_class is not TestBase
+            ):
                 tests.append((test_name, test_class))
 
     results_root = Path(args.results).expanduser().resolve()
     results_root.mkdir(parents=True, exist_ok=True)
 
-    test_env = xemutest.TestEnvironment(
+    test_env = Environment(
         private_path,
         xemu_path,
         ffmpeg_path,
@@ -81,22 +81,15 @@ def main():
     )
 
     for i, (test_name, test_cls) in enumerate(tests):
-        log.info("Test %d", i)
-        log.info("-" * 40)
-
         test_results = results_root / test_name
         test_data = test_data_root / test_name
         try:
+            log.info("Test %d - %s: Starting", i, test_name)
             test = test_cls(test_env, test_results, test_data)
-        except BaseException:
-            log.exception("Test %d - %s setup failed!", i, test_name)
-            result = False
-            continue
-        try:
             test.run()
-            log.info("Test %d - %s passed!", i, test_name)
+            log.info("Test %d - %s: Finished", i, test_name)
         except BaseException:
-            log.exception("Test %d - %s failed!", i, test_name)
+            log.exception("Test %d - %s: Failed", i, test_name)
             result = False
 
     exit(0 if result else 1)
