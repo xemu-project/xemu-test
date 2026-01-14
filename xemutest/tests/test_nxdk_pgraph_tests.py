@@ -261,7 +261,7 @@ renderer = '{renderer.upper()}'
         if len(parts) < 4:
             return None
         renderer = parts[0]
-        suite = parts[2]
+        suite = parts[2].replace("_", " ")
         test_name = parts[3].rsplit(".", 1)[0]  # Remove .png extension
         return (renderer, PgraphTestId(suite, test_name))
 
@@ -287,7 +287,7 @@ renderer = '{renderer.upper()}'
                 key = self._get_test_id_from_image_path(path)
                 if key and key in self._pgraph_results:
                     self._pgraph_results[key].status = PgraphTestStatus.DIFFERED
-                    self._pgraph_results[key].message = message
+                    self._pgraph_results[key].message = "Different from golden"
 
             # Mark remaining COMPLETED tests as MATCHED only if comparison was performed
             # If perceptualdiff is not available, leave them as COMPLETED (-> UNVERIFIED)
