@@ -1,5 +1,7 @@
 import logging
 import shutil
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 
 from .env import Environment
@@ -9,6 +11,30 @@ from .xemu_manager import XemuManager
 
 
 log = logging.getLogger(__name__)
+
+
+class TestStatus(Enum):
+    """Status of a test or subtest."""
+
+    RUNNING = auto()  # Test is currently executing
+    PASSED = auto()
+    FAILED = auto()
+    UNVERIFIED = auto()  # Test completed but results not verified
+
+
+@dataclass
+class TestResult:
+    """Result of a test."""
+
+    name: str
+    status: TestStatus
+    message: str = ""
+    subtests: list["TestResult"] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        """Returns True if the test did not fail (passed or unverified)."""
+        return self.status in (TestStatus.PASSED, TestStatus.UNVERIFIED)
 
 
 class TestBase:
@@ -21,16 +47,23 @@ class TestBase:
     ):
         self.test_env = test_env
         self.results_path = Path(results_path)
+        self._test_result: TestResult | None = None
 
     def _run(self):
         """Execute the test. Should be implemented by subclass."""
         raise NotImplementedError("Subclass must implement run() method")
 
-    def run(self):
+    def run(self) -> TestResult:
         shutil.rmtree(self.results_path, True)
         self.results_path.mkdir(parents=True, exist_ok=True)
+        self._test_result = TestResult(
+            name=type(self).__name__, status=TestStatus.RUNNING
+        )
         self._run()
         self.analyze_results()
+        if self._test_result.status == TestStatus.RUNNING:
+            self._test_result.status = TestStatus.PASSED
+        return self._test_result
 
     def analyze_results(self):
         """Validate test results.
@@ -38,6 +71,14 @@ class TestBase:
         This method should be implemented by the subclass to confirm that the output of the test matches expectations.
         """
         pass
+
+    def add_subtest_result(self, name: str, status: TestStatus, message: str = ""):
+        """Add a subtest result to the test results."""
+        if self._test_result is None:
+            return
+        self._test_result.subtests.append(TestResult(name, status, message))
+        if status == TestStatus.FAILED:
+            self._test_result.status = TestStatus.FAILED
 
 
 class XemuTestBase(TestBase):

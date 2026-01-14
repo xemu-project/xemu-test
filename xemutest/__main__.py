@@ -7,6 +7,7 @@ from pathlib import Path
 
 from xemutest import Environment, TestBase
 from xemutest import ci
+from xemutest.test_base import TestResult, TestStatus
 
 log = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ def main():
         perceptualdiff_path,
     )
 
-    test_results_summary: dict[str, bool] = {}
+    test_results_summary: dict[str, TestResult] = {}
 
     for i, (test_name, test_cls) in enumerate(tests):
         test_results = results_root / test_name
@@ -95,25 +96,60 @@ def main():
             try:
                 log.info("Test %d - %s: Starting", i, test_name)
                 test = test_cls(test_env, test_results, test_data)
-                test.run()
+                test_result = test.run()
                 log.info("Test %d - %s: Finished", i, test_name)
-                test_results_summary[test_name] = True
+                test_results_summary[test_name] = test_result
+                if not test_result.ok:
+                    result = False
             except BaseException:
                 log.exception("Test %d - %s: Failed", i, test_name)
-                test_results_summary[test_name] = False
+                test_results_summary[test_name] = TestResult(
+                    name=test_name, status=TestStatus.FAILED
+                )
                 result = False
 
     # Write job summary for GitHub Actions
     if ci.is_github_actions():
         summary = ci.JobSummary()
         summary.add_heading("xemu Test Results")
-        summary.add_table(
-            headers=["Test", "Status"],
-            rows=[
-                [name, "✅ Passed" if passed else "❌ Failed"]
-                for name, passed in test_results_summary.items()
-            ],
-        )
+
+        def format_status(r: TestResult) -> str:
+            match r.status:
+                case TestStatus.PASSED:
+                    return "✅ Passed"
+                case TestStatus.FAILED:
+                    return "❌ Failed"
+                case TestStatus.UNVERIFIED:
+                    return "⚠️ Unverified"
+                case TestStatus.RUNNING:
+                    return "🔄 Running"
+
+        def collect_rows(
+            test_result: TestResult, parent_path: str = ""
+        ) -> list[list[str]]:
+            """Recursively collect rows for a test and its subtests."""
+            full_name = (
+                f"{parent_path}::{test_result.name}"
+                if parent_path
+                else test_result.name
+            )
+            rows = [
+                [
+                    full_name,
+                    format_status(test_result),
+                    test_result.message,
+                ]
+            ]
+            for subtest in test_result.subtests:
+                rows.extend(collect_rows(subtest, full_name))
+            return rows
+
+        # Build rows including subtests
+        rows: list[list[str]] = []
+        for test_result in test_results_summary.values():
+            rows.extend(collect_rows(test_result))
+
+        summary.add_table(headers=["Test", "Status", "Details"], rows=rows)
         summary.write()
 
     exit(0 if result else 1)

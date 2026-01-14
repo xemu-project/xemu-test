@@ -4,11 +4,19 @@ import json
 import re
 import logging
 from dataclasses import dataclass, field
+from enum import Enum, auto
 import sys
 from typing import NamedTuple
 from pathlib import Path
 
-from xemutest import ci, GoldenImageComparator, TestBase, Environment, XemuTestBase
+from xemutest import (
+    ci,
+    GoldenImageComparator,
+    TestBase,
+    TestStatus,
+    Environment,
+    XemuTestBase,
+)
 
 log = logging.getLogger(__name__)
 
@@ -21,10 +29,25 @@ class PgraphTestId(NamedTuple):
     name: str
 
 
+class PgraphTestStatus(Enum):
+    INCOMPLETE = auto()  # Test did not complete execution
+    COMPLETED = auto()  # Test completed, awaiting comparison
+    DIFFERED = auto()  # Test completed but output differs from golden
+    MATCHED = auto()  # Test completed and matches golden
+
+
+@dataclass
+class PgraphTestResult:
+    test_id: PgraphTestId
+    renderer: str
+    status: PgraphTestStatus
+    message: str = ""
+
+
 @dataclass
 class PgraphTestSuiteAnalysis:
     tests_completed: list[PgraphTestId] = field(default_factory=list)
-    tests_failed: list[PgraphTestId] = field(default_factory=list)
+    tests_incomplete: list[PgraphTestId] = field(default_factory=list)
 
 
 class NxdkPgraphTestExecutor(XemuTestBase):
@@ -76,6 +99,7 @@ class TestNxdkPgraphTests(TestBase):
         if not self.golden_results_path.is_dir():
             msg = f"{self.golden_results_path} was not installed with the package. Please check it out from Github."
             raise FileNotFoundError(msg)
+        self._pgraph_results: dict[tuple[str, PgraphTestId], PgraphTestResult] = {}
 
     @staticmethod
     def _get_xemu_config_addend(renderer):
@@ -91,8 +115,6 @@ renderer = '{renderer.upper()}'
 
         for renderer in renderers_to_test:
             num_iterations = 0
-            tests_completed = []
-            tests_failed = []
             tests_ran = []
             should_run = True
 
@@ -118,26 +140,39 @@ renderer = '{renderer.upper()}'
                     progress_analysis = self._analyze_pgraph_progress_log(
                         results_path / "pgraph_progress_log.txt"
                     )
-                    tests_completed.extend(progress_analysis.tests_completed)
-                    tests_failed.extend(progress_analysis.tests_failed)
+
+                    # Track completed tests (pending comparison)
+                    for test_id in progress_analysis.tests_completed:
+                        self._pgraph_results[(renderer, test_id)] = PgraphTestResult(
+                            test_id=test_id,
+                            renderer=renderer,
+                            status=PgraphTestStatus.COMPLETED,
+                        )
+
+                    # Track incomplete tests
+                    for test_id in progress_analysis.tests_incomplete:
+                        self._pgraph_results[(renderer, test_id)] = PgraphTestResult(
+                            test_id=test_id,
+                            renderer=renderer,
+                            status=PgraphTestStatus.INCOMPLETE,
+                            message="Test did not complete",
+                        )
+
                     tests_ran.extend(progress_analysis.tests_completed)
-                    tests_ran.extend(progress_analysis.tests_failed)
+                    tests_ran.extend(progress_analysis.tests_incomplete)
 
                     log.info(
-                        "Iteration %d: %d completed, %d failed",
+                        "Iteration %d: %d completed, %d incomplete",
                         num_iterations,
                         len(progress_analysis.tests_completed),
-                        len(progress_analysis.tests_failed),
+                        len(progress_analysis.tests_incomplete),
                     )
 
                     num_iterations += 1
                     should_run = bool(
-                        progress_analysis.tests_failed
+                        progress_analysis.tests_incomplete
                         or progress_analysis.tests_completed
                     )
-
-                for test in tests_failed:
-                    log.error("%s - %s did not complete!", test.suite, test.name)
 
     @staticmethod
     def _build_pgraph_test_config(
@@ -209,8 +244,20 @@ renderer = '{renderer.upper()}'
                     log.warning("Unexpected log entry: %s", line)
         if test_started:
             log.warning("Test %r was not completed!", test_started)
-            analysis.tests_failed.append(test_started)
+            analysis.tests_incomplete.append(test_started)
         return analysis
+
+    def _get_test_id_from_image_path(
+        self, path: Path
+    ) -> tuple[str, PgraphTestId] | None:
+        """Extract renderer and test ID from an image path like 'opengl/iteration_0/Suite/Test.png'."""
+        parts = path.parts
+        if len(parts) < 4:
+            return None
+        renderer = parts[0]
+        suite = parts[2]
+        test_name = parts[3].rsplit(".", 1)[0]  # Remove .png extension
+        return (renderer, PgraphTestId(suite, test_name))
 
     def analyze_results(self):
         """Processes the generated image files, diffing against the golden result set."""
@@ -228,11 +275,44 @@ renderer = '{renderer.upper()}'
 
             failed_comparisons = comparator.compare_all(path_transform=path_transform)
 
-            if failed_comparisons:
-                for path, message in failed_comparisons.items():
-                    ci.error(
-                        f"Image mismatch: {path} - {message}",
-                        title="Golden Image Comparison",
-                    )
-                msg = f"Failed {len(failed_comparisons)} comparisons"
-                raise Exception(msg)
+            # Update status for differing tests
+            for path_str, message in failed_comparisons.items():
+                path = Path(path_str)
+                key = self._get_test_id_from_image_path(path)
+                if key and key in self._pgraph_results:
+                    self._pgraph_results[key].status = PgraphTestStatus.DIFFERED
+                    self._pgraph_results[key].message = message
+
+            # Mark remaining COMPLETED tests as MATCHED only if comparison was performed
+            # If perceptualdiff is not available, leave them as COMPLETED (-> UNVERIFIED)
+            if self.test_env.perceptualdiff_enabled:
+                for result in self._pgraph_results.values():
+                    if result.status == PgraphTestStatus.COMPLETED:
+                        result.status = PgraphTestStatus.MATCHED
+
+            # Generate subtest results from unified tracking
+            has_failures = False
+            for result in self._pgraph_results.values():
+                test_name = (
+                    f"{result.renderer}::{result.test_id.suite}::{result.test_id.name}"
+                )
+                match result.status:
+                    case PgraphTestStatus.MATCHED:
+                        status = TestStatus.PASSED
+                    case PgraphTestStatus.COMPLETED:
+                        status = TestStatus.UNVERIFIED  # Completed but not compared
+                    case _:
+                        status = TestStatus.FAILED
+                message = result.message if status != TestStatus.PASSED else ""
+                if status == TestStatus.FAILED:
+                    has_failures = True
+                    log.error("%s: %s", test_name, result.status.name)
+                self.add_subtest_result(test_name, status, message)
+
+            if has_failures:
+                failed_count = sum(
+                    1
+                    for r in self._pgraph_results.values()
+                    if r.status != PgraphTestStatus.MATCHED
+                )
+                raise Exception(f"{failed_count} test(s) failed")
