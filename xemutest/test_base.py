@@ -60,10 +60,15 @@ class TestBase:
         self._test_result = TestResult(
             name=type(self).__name__, status=TestStatus.RUNNING
         )
-        self._run()
-        self.analyze_results()
-        if self._test_result.status == TestStatus.RUNNING:
-            self._test_result.status = TestStatus.PASSED
+        try:
+            self._run()
+            self.analyze_results()
+            if self._test_result.status == TestStatus.RUNNING:
+                self._test_result.status = TestStatus.PASSED
+        except Exception as e:
+            log.exception("Test failed with exception")
+            self._test_result.status = TestStatus.FAILED
+            self._test_result.message = str(e)
         return self._test_result
 
     def analyze_results(self):
