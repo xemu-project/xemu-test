@@ -182,7 +182,7 @@ class JobSummary:
             log.debug("GITHUB_STEP_SUMMARY not set, skipping job summary")
             return
 
-        with open(summary_file, "a") as f:
+        with open(summary_file, "a", encoding="utf-8") as f:
             f.write("\n".join(self._content))
             f.write("\n")
 
