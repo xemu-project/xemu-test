@@ -42,11 +42,14 @@ class PgraphTestResult:
     renderer: str
     status: PgraphTestStatus
     message: str = ""
+    duration: str = ""  # Duration string from progress log (e.g., "43ms")
 
 
 @dataclass
 class PgraphTestSuiteAnalysis:
-    tests_completed: list[PgraphTestId] = field(default_factory=list)
+    tests_completed: list[tuple[PgraphTestId, str]] = field(
+        default_factory=list
+    )  # (test_id, duration)
     tests_incomplete: list[PgraphTestId] = field(default_factory=list)
 
 
@@ -142,11 +145,12 @@ renderer = '{renderer.upper()}'
                     )
 
                     # Track completed tests (pending comparison)
-                    for test_id in progress_analysis.tests_completed:
+                    for test_id, duration in progress_analysis.tests_completed:
                         self._pgraph_results[(renderer, test_id)] = PgraphTestResult(
                             test_id=test_id,
                             renderer=renderer,
                             status=PgraphTestStatus.COMPLETED,
+                            duration=duration,
                         )
 
                     # Track incomplete tests
@@ -158,7 +162,9 @@ renderer = '{renderer.upper()}'
                             message="Test did not complete",
                         )
 
-                    tests_ran.extend(progress_analysis.tests_completed)
+                    tests_ran.extend(
+                        test_id for test_id, _ in progress_analysis.tests_completed
+                    )
                     tests_ran.extend(progress_analysis.tests_incomplete)
 
                     log.info(
@@ -232,11 +238,11 @@ renderer = '{renderer.upper()}'
                     suite, test = starting_matches.group("suite", "test")
                     test_started = PgraphTestId(suite, test)
                 elif completed_matches := COMPLETED_RE.match(line):
-                    test = completed_matches.group("test")
+                    test, duration = completed_matches.group("test", "duration")
                     assert (
                         test_started is not None and test_started.name == test
                     ), "Unmatched starting/completed sequence"
-                    analysis.tests_completed.append(test_started)
+                    analysis.tests_completed.append((test_started, duration))
                     test_started = None
                 elif line == "Testing completed normally, closing log.":
                     continue
@@ -307,7 +313,7 @@ renderer = '{renderer.upper()}'
                 if status == TestStatus.FAILED:
                     has_failures = True
                     log.error("%s: %s", test_name, result.status.name)
-                self.add_subtest_result(test_name, status, message)
+                self.add_subtest_result(test_name, status, message, result.duration)
 
             if has_failures:
                 failed_count = sum(

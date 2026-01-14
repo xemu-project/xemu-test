@@ -29,6 +29,7 @@ class TestResult:
     name: str
     status: TestStatus
     message: str = ""
+    duration: str = ""  # Duration string (e.g., "43ms")
     subtests: list["TestResult"] = field(default_factory=list)
 
     @property
@@ -72,11 +73,13 @@ class TestBase:
         """
         pass
 
-    def add_subtest_result(self, name: str, status: TestStatus, message: str = ""):
+    def add_subtest_result(
+        self, name: str, status: TestStatus, message: str = "", duration: str = ""
+    ):
         """Add a subtest result to the test results."""
         if self._test_result is None:
             return
-        self._test_result.subtests.append(TestResult(name, status, message))
+        self._test_result.subtests.append(TestResult(name, status, message, duration))
         if status == TestStatus.FAILED:
             self._test_result.status = TestStatus.FAILED
 

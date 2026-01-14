@@ -137,6 +137,7 @@ def main():
                 [
                     full_name,
                     format_status(test_result),
+                    test_result.duration,
                     test_result.message,
                 ]
             ]
@@ -149,7 +150,7 @@ def main():
         for test_result in test_results_summary.values():
             rows.extend(collect_rows(test_result))
 
-        summary.add_table(headers=["Test", "Status", "Details"], rows=rows)
+        summary.add_table(headers=["Test", "Status", "Duration", "Details"], rows=rows)
         summary.write()
 
     exit(0 if result else 1)
