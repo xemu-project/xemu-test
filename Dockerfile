@@ -24,7 +24,7 @@ WORKDIR /work
 
 RUN mkdir -p /data/TestNxdkPgraphTests
 RUN curl \
-    -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2026-01-08_17-34-01-989184157/nxdk_pgraph_tests_xiso.iso \
+    -L https://github.com/abaire/nxdk_pgraph_tests/releases/download/v2026-01-23_17-51-44-155274729/nxdk_pgraph_tests_xiso.iso \
     --output /data/TestNxdkPgraphTests/nxdk_pgraph_tests_xiso.iso
 RUN git clone --depth 1 https://github.com/abaire/nxdk_pgraph_tests_golden_results.git /data/TestNxdkPgraphTests/nxdk_pgraph_tests_golden_results
 
