@@ -27,7 +27,7 @@ jobs:
           Invoke-WebRequest -Uri $asset.browser_download_url -OutFile release.zip -MaximumRedirection 10
           Expand-Archive -LiteralPath release.zip -DestinationPath $env:GITHUB_WORKSPACE -Force
       - name: Setup venv
-        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
         with:
           activate-environment: true
           python-version: "3.14"
