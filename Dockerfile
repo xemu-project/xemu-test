@@ -13,6 +13,15 @@ RUN /usr/src/nxdk/docker_entry.sh make -C /test-xbe
 RUN cp /test-xbe/tester.iso /data/TestXBE/
 
 
+FROM nxdk-base AS test-timers-data
+RUN mkdir /data
+
+COPY test-timers /test-timers
+RUN mkdir /data/TestTimers
+RUN /usr/src/nxdk/docker_entry.sh make -C /test-timers
+RUN cp /test-timers/tester.iso /data/TestTimers/
+
+
 #
 # Build nxdk_pgraph_tests
 #
@@ -86,6 +95,7 @@ RUN apt-get -qy install \
 # Combine test data
 FROM scratch AS data
 COPY --from=test-xbe-data /data /data
+COPY --from=test-timers-data /data/TestTimers /data/TestTimers
 COPY --from=pgraph-data /data/TestNxdkPgraphTests /data/TestNxdkPgraphTests
 
 #
