@@ -28,6 +28,12 @@ def main():
         "--sysram", type=int, default=64, choices=[64, 128], help="Guest RAM size"
     )
     ap.add_argument(
+        "--only",
+        action="append",
+        default=[],
+        help="Specify the specific tests to run (may be specified multiple times)",
+    )
+    ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
     args = ap.parse_args()
@@ -65,6 +71,8 @@ def main():
     tests = []
     result = True
 
+    only_filter = set(args.only) if args.only else None
+
     tests_dir = this_dir / "tests"
     sys.path.append(str(tests_dir))
     for path in tests_dir.iterdir():
@@ -78,6 +86,8 @@ def main():
                 and issubclass(test_class, TestBase)
                 and test_class is not TestBase
             ):
+                if only_filter and test_name not in only_filter:
+                    continue
                 tests.append((test_name, test_class))
 
     results_root = Path(args.results).expanduser().resolve()
