@@ -13,6 +13,26 @@ from xemutest.video_capture import VideoCapture
 
 log = logging.getLogger(__name__)
 
+_MAX_PATH_LEN = 100
+
+
+def _make_safe_iso_path(path: Path) -> str:
+    """Convert path to relative if it's too long, otherwise return as-is."""
+    path_str = str(path)
+
+    if not path.is_absolute() or len(path_str) <= _MAX_PATH_LEN:
+        return path_str
+
+    try:
+        rel_path = path.relative_to(Path.cwd())
+        rel_str = str(rel_path)
+        if len(rel_str) < len(path_str):
+            return rel_str
+    except (ValueError, OSError):
+        pass
+
+    return path_str
+
 
 class XemuManager:
     """Manages xemu process lifecycle and configuration."""
@@ -79,7 +99,7 @@ hard_fpu = {"true" if self.test_env.hard_fpu else "false"}
         self.config_path.write_text(self.config)
         c = [str(self.test_env.xemu_path), "-config_path", str(self.config_path)]
         if self.iso_path:
-            c += ["-dvd_path", str(self.iso_path)]
+            c += ["-dvd_path", _make_safe_iso_path(self.iso_path)]
         log.debug(
             "Launching xemu with command %s from directory %s", repr(c), Path.cwd()
         )

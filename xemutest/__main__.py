@@ -39,6 +39,18 @@ def main():
         help="Specify the specific tests to run (may be specified multiple times)",
     )
     ap.add_argument(
+        "--failure-filter",
+        help=(
+            "Path to JSON test failure filter. Failures that match entries in this file will be listed as a warning "
+            "rather than a failure. Tests that pass unexpectedly will be treated as a failure."
+        ),
+    )
+    ap.add_argument(
+        "--ci-summary-omit-innermost-passed-subtests",
+        action="store_true",
+        help="Omit 'Passed' results from the innermost level of subtests from the GitHub summary table.",
+    )
+    ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
     args = ap.parse_args()
@@ -105,6 +117,7 @@ def main():
         require_mcpx=not args.no_mcpx,
         sysram=args.sysram,
         hard_fpu=not args.no_hard_fpu,
+        failure_filter_path=args.failure_filter,
     )
 
     test_results_summary: dict[str, TestResult] = {}
@@ -143,6 +156,10 @@ def main():
                     return "⚠️ Unverified"
                 case TestStatus.RUNNING:
                     return "🔄 Running"
+                case TestStatus.FAILURE_SUPPRESSED:
+                    return "⚠️ Failure suppressed by failure filter"
+                case TestStatus.UNEXPECTED_FILTER_MISMATCH:
+                    return "❌ Test state does not match failure filter expectation"
 
         def collect_rows(
             test_result: TestResult, parent_path: str = ""
@@ -153,9 +170,20 @@ def main():
                 if parent_path
                 else test_result.name
             )
+
+            if (
+                parent_path
+                and not test_result.subtests
+                and test_result.status == TestStatus.PASSED
+                and args.ci_summary_omit_innermost_passed_subtests
+            ):
+                return []
+
             rows = [
                 [
-                    full_name,
+                    f"[{full_name}]({test_result.location_url})"
+                    if test_result.location_url
+                    else full_name,
                     format_status(test_result),
                     test_result.duration,
                     test_result.message,
