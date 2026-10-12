@@ -92,13 +92,13 @@ class TestBase:
 class XemuTestBase(TestBase):
     """Test framework specifically for xemu-based tests."""
 
-    def __init__(self, test_env: Environment, results_path: Path):
+    def __init__(self, test_env: Environment, results_path: Path, *, timeout_seconds: int = 60):
         super().__init__(test_env, results_path)
 
         self.hdd_path = Path.cwd() / "test.img"
         self.xbox_results_path: str | None = None
         self.hdd_manager = HddManager(self.hdd_path)
-        self.xemu_manager = XemuManager(test_env, self.hdd_path)
+        self.xemu_manager = XemuManager(test_env, self.hdd_path, timeout_seconds=timeout_seconds)
         self.video_capture = VideoCapture(test_env, self.results_path / "capture.mp4")
         self.xemu_manager.set_video_capture(self.video_capture)
 

@@ -14,7 +14,7 @@ class TestXBE(XemuTestBase):
         results_path: Path,
         test_data_path: Path,
     ):
-        super().__init__(test_env, results_path)
+        super().__init__(test_env, results_path, timeout_seconds=30)
         self.xemu_manager.iso_path = test_data_path / "tester.iso"
         self.xbox_results_path = "results"
 

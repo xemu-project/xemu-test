@@ -1,4 +1,4 @@
-name: Test
+name: Test (self-hosted)
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
           python-version: "3.14"
       - name: Setup xemu-test
         run: |
-          uv pip install --no-cache "https://github.com/xemu-project/xemu-test/releases/latest/download/xemutest-0.0.7-py3-none-any.whl"
+          uv pip install --no-cache "https://github.com/xemu-project/xemu-test/releases/latest/download/xemutest-0.0.8-py3-none-any.whl"
       - name: Run tests
         run: |
           $xemuExe = Join-Path $pwd "xemu.exe"

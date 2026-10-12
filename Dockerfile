@@ -66,9 +66,6 @@ RUN apt-get -qy install \
         zlib1g \
         ;
 
-# Combine test data
-FROM scratch AS data
-COPY --from=test-xbe-data /data /data
 
 #
 # Build final test container
@@ -85,8 +82,8 @@ WORKDIR /work
 
 COPY scripts/docker_entry.sh /docker_entry.sh
 COPY ./scripts /work/xemu-test/scripts/
-COPY --from=data /data /work/xemu-test/data
 COPY --from=build-xemutest /build/venv /venv
+COPY --from=test-xbe-data /data /work/xemu-test/data
 
 ENTRYPOINT ["/docker_entry.sh"]
 
