@@ -18,7 +18,6 @@ def main():
     ap.add_argument("private", help="Path to private data files")
     ap.add_argument("results", help="Path to directory where results should go")
     ap.add_argument("--ffmpeg", help="Path to the ffmpeg binary")
-    ap.add_argument("--perceptualdiff", help="Path to the perceptualdiff binary")
     ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
@@ -36,11 +35,6 @@ def main():
     private_path = Path(args.private).expanduser().resolve()
     test_data_root = this_dir / "data"
     ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
-    perceptualdiff_path = (
-        Path(args.perceptualdiff).expanduser().resolve()
-        if args.perceptualdiff
-        else None
-    )
 
     # Validate required paths
     errors = []
@@ -52,8 +46,6 @@ def main():
         errors.append(f"Test data directory not found: {test_data_root}")
     if ffmpeg_path and not ffmpeg_path.is_file():
         errors.append(f"ffmpeg binary not found: {ffmpeg_path}")
-    if perceptualdiff_path and not perceptualdiff_path.is_file():
-        errors.append(f"perceptualdiff binary not found: {perceptualdiff_path}")
     if errors:
         for error in errors:
             log.error(error)
@@ -84,7 +76,6 @@ def main():
         private_path,
         xemu_path,
         ffmpeg_path,
-        perceptualdiff_path,
     )
 
     test_results_summary: dict[str, TestResult] = {}
