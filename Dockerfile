@@ -85,6 +85,8 @@ COPY ./scripts /work/xemu-test/scripts/
 COPY --from=build-xemutest /build/venv /venv
 COPY --from=test-xbe-data /data /work/xemu-test/data
 
+RUN /venv/bin/python3 /work/xemu-test/scripts/fetch_test_requirements.py /work/xemu-test/data
+
 ENTRYPOINT ["/docker_entry.sh"]
 
 CMD ["/venv/bin/python3", "-m", "xemutest", "--data", "/work/xemu-test/data", "xemu", "/work/private", "/work/results"]

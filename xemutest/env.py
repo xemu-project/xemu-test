@@ -12,6 +12,7 @@ class Environment:
     require_mcpx: bool = True
     sysram: int = 64
     hard_fpu: bool = True
+    failure_filter_path: Path | None = None
 
     @property
     def video_capture_enabled(self) -> bool:

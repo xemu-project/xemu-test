@@ -1,0 +1,228 @@
+{
+  "last_updated_at_xemu_version": "0.8.136",
+  "expected_failures": {
+    "TestNxdkLowLevelCPUTests__FpuTestXiso": {
+      "X87 fld/fstp Precision Control": [
+        {
+          "scope": "Single precision (PC = 00b)",
+          "events": [
+            {
+              "level": "fail",
+              "message": "qword copy 0xc80008f8c0000000 != 0xc80008f8c0023c2f"
+            },
+            {
+              "level": "fail",
+              "message": "qword copy 0x0123456780000000 != 0x0123456789abcdef"
+            },
+            {
+              "level": "fail",
+              "message": "qword copy 0x3ff0000000000000 != 0x3ff0000000000001"
+            }
+          ]
+        }
+      ]
+    },
+    "TestNxdkLowLevelCPUTests__MmxTestXiso": {
+      "MMX/x87 Aliasing & EMMS": [
+        {
+          "level": "fail",
+          "message": "FP0 expected mantissa 0x1122334455667788 exp 0xFFFF, got 0x1122334455667788 exp 0x0000",
+          "file": "mmx_tests/test_mmx_x87_aliasing.cpp",
+          "line": 66,
+          "t_ms": 483,
+          "fields": {
+            "register": "FP0",
+            "expected_mantissa": "0x1122334455667788",
+            "actual_mantissa": "0x1122334455667788",
+            "expected_exp": "0x0000FFFF",
+            "actual_exp": "0x00000000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "FP7 expected mantissa 0x8877665544332211 exp 0xFFFF, got 0x8877665544332211 exp 0x4007",
+          "file": "mmx_tests/test_mmx_x87_aliasing.cpp",
+          "line": 80,
+          "t_ms": 487,
+          "fields": {
+            "register": "FP7",
+            "expected_mantissa": "0x8877665544332211",
+            "actual_mantissa": "0x8877665544332211",
+            "expected_exp": "0x0000FFFF",
+            "actual_exp": "0x00004007"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "fld1 without EMMS expected FSW bits 0x0241 (IE+SF+C1), got 0x3800",
+          "file": "mmx_tests/test_mmx_x87_aliasing.cpp",
+          "line": 244,
+          "t_ms": 511,
+          "fields": {
+            "expected_fsw_bits": "0x00000241",
+            "fsw": "0x00003800"
+          }
+        }
+      ]
+    },
+    "TestNxdkLowLevelCPUTests__SseTestXiso": {
+      "SSE Approximations (rcp/rsqrt)": [
+        {
+          "level": "fail",
+          "message": "rcpss(1.000000) expected 0x3F7FF000 got 0x3F800000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 111,
+          "t_ms": 429,
+          "fields": {
+            "op": "rcpss",
+            "input": 1.000000,
+            "expected": "0x3F7FF000",
+            "actual": "0x3F800000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rcpss(2.000000) expected 0x3EFFF000 got 0x3F000000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 111,
+          "t_ms": 436,
+          "fields": {
+            "op": "rcpss",
+            "input": 2.000000,
+            "expected": "0x3EFFF000",
+            "actual": "0x3F000000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rcpss(0.500000) expected 0x3FFFF000 got 0x40000000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 111,
+          "t_ms": 444,
+          "fields": {
+            "op": "rcpss",
+            "input": 0.500000,
+            "expected": "0x3FFFF000",
+            "actual": "0x40000000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rcpss(4.000000) expected 0x3E7FF000 got 0x3E800000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 111,
+          "t_ms": 451,
+          "fields": {
+            "op": "rcpss",
+            "input": 4.000000,
+            "expected": "0x3E7FF000",
+            "actual": "0x3E800000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rcpss(0.250000) expected 0x407FF000 got 0x40800000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 111,
+          "t_ms": 458,
+          "fields": {
+            "op": "rcpss",
+            "input": 0.250000,
+            "expected": "0x407FF000",
+            "actual": "0x40800000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rsqrtss(1.000000) expected 0x3F7FF000 got 0x3F800000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 191,
+          "t_ms": 530,
+          "fields": {
+            "op": "rsqrtss",
+            "input": 1.000000,
+            "expected": "0x3F7FF000",
+            "actual": "0x3F800000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rsqrtss(4.000000) expected 0x3EFFF000 got 0x3F000000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 191,
+          "t_ms": 537,
+          "fields": {
+            "op": "rsqrtss",
+            "input": 4.000000,
+            "expected": "0x3EFFF000",
+            "actual": "0x3F000000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rsqrtss(0.250000) expected 0x3FFFF000 got 0x40000000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 191,
+          "t_ms": 544,
+          "fields": {
+            "op": "rsqrtss",
+            "input": 0.250000,
+            "expected": "0x3FFFF000",
+            "actual": "0x40000000"
+          }
+        },
+        {
+          "level": "fail",
+          "message": "rsqrtss(16.000000) expected 0x3E7FF000 got 0x3E800000",
+          "file": "sse_tests/test_sse_approximations.cpp",
+          "line": 191,
+          "t_ms": 551,
+          "fields": {
+            "op": "rsqrtss",
+            "input": 16.000000,
+            "expected": "0x3E7FF000",
+            "actual": "0x3E800000"
+          }
+        }
+      ]
+    },
+    "TestNxdkLowLevelNV2ATests__M2mfTestXiso": {
+      "M2MF Causal Chained Transfers": [
+        {
+          "level": "fail",
+          "message": "Intermediate Buffer B did not receive expected data from A.",
+          "file": "m2mf_tests/test_m2mf_batching_causal_chain.cpp",
+          "line": 74,
+          "t_ms": 642
+        }
+      ],
+      "M2MF Batched Independent Transfers": [
+        {
+          "level": "fail",
+          "message": "Batched transfer chunk 0 data mismatch.",
+          "file": "m2mf_tests/test_m2mf_batching_independent.cpp",
+          "line": 64,
+          "t_ms": 676
+        }
+      ],
+      "M2MF Notifier Completion Record": [
+        {
+          "level": "fail",
+          "message": "PTIMER timestamp was not written by hardware.",
+          "file": "m2mf_tests/test_m2mf_notifier_record.cpp",
+          "line": 70,
+          "t_ms": 983
+        }
+      ],
+      "M2MF Notifier Context Switching": [
+        {
+          "level": "fail",
+          "message": "Live notifier timestamp did not advance.",
+          "file": "m2mf_tests/test_m2mf_notifier_switching.cpp",
+          "line": 104,
+          "t_ms": 1030
+        }
+      ]
+    }
+  }
+}

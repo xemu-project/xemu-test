@@ -1,25 +1,41 @@
+from __future__ import annotations
+
+import json
 import logging
 import shutil
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import StrEnum, auto
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from xemutest.env import Environment
 from xemutest.errors import RunNotImplementedError
 from xemutest.hdd_manager import HddManager
 from xemutest.video_capture import VideoCapture
 from xemutest.xemu_manager import XemuManager
 
+if TYPE_CHECKING:
+    from os import PathLike
+
+    from xemutest.env import Environment
+
 log = logging.getLogger(__name__)
 
 
-class TestStatus(Enum):
+class TestStatus(StrEnum):
     """Status of a test or subtest."""
 
     RUNNING = auto()  # Test is currently executing
     PASSED = auto()
     FAILED = auto()
     UNVERIFIED = auto()  # Test completed but results not verified
+    FAILURE_SUPPRESSED = auto()  # Test failed but matched an expected failure filter
+    UNEXPECTED_FILTER_MISMATCH = (
+        auto()
+    )  # Test matched an expected failure filter but passed
+
+    @property
+    def is_failure(self) -> bool:
+        return self in (TestStatus.FAILED, TestStatus.UNEXPECTED_FILTER_MISMATCH)
 
 
 @dataclass
@@ -30,12 +46,39 @@ class TestResult:
     status: TestStatus
     message: str = ""
     duration: str = ""  # Duration string (e.g., "43ms")
-    subtests: list["TestResult"] = field(default_factory=list)
+    location_url: str = ""
+    subtests: list[TestResult] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
         """Returns True if the test did not fail (passed or unverified)."""
-        return self.status in (TestStatus.PASSED, TestStatus.UNVERIFIED)
+        return not self.status.is_failure
+
+    def add_subresult(
+        self,
+        name: str,
+        status: TestStatus,
+        message: str = "",
+        duration: str = "",
+        location_url: str = "",
+    ):
+        """Add a subresult result to this TestResult."""
+        subresult = TestResult(name, status, message, duration, location_url)
+        self.subtests.append(subresult)
+        if status == TestStatus.FAILED:
+            self.status = TestStatus.FAILED
+
+        return subresult
+
+
+def _load_failure_filters(json_path: PathLike | None) -> dict[str, Any]:
+    if not json_path:
+        return {}
+
+    with open(json_path) as infile:
+        filter_data = json.load(infile)
+
+    return filter_data.get("expected_failures", {})
 
 
 class TestBase:
@@ -49,6 +92,10 @@ class TestBase:
         self.test_env = test_env
         self.results_path = Path(results_path)
         self._test_result: TestResult | None = None
+
+        self._failure_filter_registry = _load_failure_filters(
+            self.test_env.failure_filter_path
+        )
 
     def _run(self):
         """Execute the test. Should be implemented by subclass."""
@@ -78,14 +125,51 @@ class TestBase:
         """
 
     def add_subtest_result(
-        self, name: str, status: TestStatus, message: str = "", duration: str = ""
-    ):
+        self,
+        name: str,
+        status: TestStatus,
+        message: str = "",
+        duration: str = "",
+        location_url: str = "",
+    ) -> TestResult | None:
         """Add a subtest result to the test results."""
         if self._test_result is None:
-            return
-        self._test_result.subtests.append(TestResult(name, status, message, duration))
-        if status == TestStatus.FAILED:
+            return None
+
+        return self._test_result.add_subresult(
+            name, status, message, duration, location_url
+        )
+
+    def get_failure_filter(self) -> dict[str, list[Any]]:
+        filt = self._failure_filter_registry.get(type(self).__name__)
+        if filt:
+            return filt
+
+        return {}
+
+    def update_test_results_from_subtests(self) -> TestStatus:
+        if self._test_result is None:
+            return TestStatus.UNVERIFIED
+
+        if not self._test_result.subtests:
+            return self._test_result.status
+
+        if any(subtest.status.is_failure for subtest in self._test_result.subtests):
             self._test_result.status = TestStatus.FAILED
+        elif any(
+            subtest.status == TestStatus.FAILURE_SUPPRESSED
+            for subtest in self._test_result.subtests
+        ):
+            self._test_result.status = TestStatus.FAILURE_SUPPRESSED
+        elif any(
+            subtest.status == TestStatus.PASSED
+            for subtest in self._test_result.subtests
+        ):
+            self._test_result.status = TestStatus.PASSED
+        else:
+            self._test_result.status = TestStatus.UNVERIFIED
+
+        return self._test_result.status
 
 
 class XemuTestBase(TestBase):

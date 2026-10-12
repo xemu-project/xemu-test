@@ -43,6 +43,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Cache Test Data
+        id: cache-test-data
+        uses: actions/cache@v6
+        with:
+          path: xemutest/data
+          key: test-data-${{ hashFiles('test-xbe/**', 'scripts/fetch_test_requirements.py') }}
+          restore-keys: |
+            test-data-
+
       - name: Build test data
         run: bash ./scripts/build_test_data.sh
       - name: Install the latest version of uv
