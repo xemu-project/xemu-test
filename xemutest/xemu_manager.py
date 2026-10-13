@@ -21,20 +21,25 @@ class XemuManager:
         self,
         test_env: Environment,
         hdd_path: Path,
+        timeout_seconds: int = 60
     ):
         self.test_env = test_env
         self.config_path = Path("xemu.toml")
         self.flash_path = test_env.private_path / "bios.bin"
-        self.mcpx_path = test_env.private_path / "mcpx.bin"
         self.hdd_path = hdd_path
         self.iso_path: Path | None = None
-        self.timeout = 60
+        self.timeout = timeout_seconds
         self.exit_status = None
         self.video_capture: VideoCapture | None = None
-        self._init_config()
 
         assert self.flash_path.is_file()
-        assert self.mcpx_path.is_file()
+        if self.test_env.require_mcpx:
+            self.mcpx_path: Path | None = test_env.private_path / "mcpx.bin"
+            assert self.mcpx_path.is_file()
+        else:
+            self.mcpx_path = None
+
+        self._init_config()
 
         if platform.system() == "Windows":
             self.app: pywinauto.application.Application | None = None
@@ -60,13 +65,14 @@ check = false
 enable = false
 
 [sys]
-mem_limit = '64'
+mem_limit = '{self.test_env.sysram}'
 
 [sys.files]
-bootrom_path = '{self.mcpx_path}'
+bootrom_path = '{self.mcpx_path if self.mcpx_path else ""}'
 flashrom_path = '{self.flash_path}'
 hdd_path = '{self.hdd_path}'
 """
+
 
     def launch(self, log_file):
         """Launch xemu and wait for it to complete or timeout."""

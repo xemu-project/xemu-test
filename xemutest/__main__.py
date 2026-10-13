@@ -17,8 +17,15 @@ def main():
     ap.add_argument("xemu", help="Path to the xemu binary")
     ap.add_argument("private", help="Path to private data files")
     ap.add_argument("results", help="Path to directory where results should go")
+    ap.add_argument("--data", help="Path to test data directory")
     ap.add_argument("--ffmpeg", help="Path to the ffmpeg binary")
-    ap.add_argument("--perceptualdiff", help="Path to the perceptualdiff binary")
+
+    ap.add_argument(
+        "--no-mcpx",
+        action="store_true",
+        help="Suppress the requirement for an MCPX boot ROM (e.g. when using Roswell BIOS)",
+    )
+    ap.add_argument("--sysram", type=int, default=64, choices=[64, 128], help="Guest RAM size")
     ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
@@ -34,13 +41,11 @@ def main():
     this_dir = Path(__file__).resolve().parent
     xemu_path = Path(args.xemu).expanduser().resolve()
     private_path = Path(args.private).expanduser().resolve()
-    test_data_root = this_dir / "data"
-    ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
-    perceptualdiff_path = (
-        Path(args.perceptualdiff).expanduser().resolve()
-        if args.perceptualdiff
-        else None
+    test_data_root = (
+        Path(args.data).expanduser().resolve() if args.data else (this_dir / "data")
     )
+    ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
+
 
     # Validate required paths
     errors = []
@@ -52,8 +57,6 @@ def main():
         errors.append(f"Test data directory not found: {test_data_root}")
     if ffmpeg_path and not ffmpeg_path.is_file():
         errors.append(f"ffmpeg binary not found: {ffmpeg_path}")
-    if perceptualdiff_path and not perceptualdiff_path.is_file():
-        errors.append(f"perceptualdiff binary not found: {perceptualdiff_path}")
     if errors:
         for error in errors:
             log.error(error)
@@ -84,7 +87,8 @@ def main():
         private_path,
         xemu_path,
         ffmpeg_path,
-        perceptualdiff_path,
+        require_mcpx=not args.no_mcpx,
+        sysram=args.sysram
     )
 
     test_results_summary: dict[str, TestResult] = {}

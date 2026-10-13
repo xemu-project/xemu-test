@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xemutest"
-version = "0.0.7"
+version = "0.0.8"
 description = "xemu Automated Tests"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.12"
 authors = [
     {name = "Matt Borgerson", email = "contact@mborgerson.com"}
 ]
 
 dependencies = [
-    "pyfatx >= 0.0.7",
+    "pyfatx >= 0.0.8",
     "pywinauto == 0.6.9; sys_platform == 'win32'",
 ]
 

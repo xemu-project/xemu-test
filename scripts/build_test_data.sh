@@ -5,7 +5,8 @@ if [[ ! -d xemutest ]]; then
 fi
 
 set -ex
-target=data
+
+target=test-xbe-data
 image=xemu-test-data-tmp-img
 docker build --target $target -t $image .
 container=$(docker create $image "")

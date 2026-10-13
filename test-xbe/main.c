@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
+const UCHAR kSMCSlaveAddress = 0x20;
+const UCHAR kSMCRegisterPower = 0x02;
+const UCHAR kSMCPowerShutdown = 0x80;
+
 int main(void)
 {
     XVideoSetMode(640, 480, 32, REFRESH_DEFAULT);
@@ -34,6 +38,11 @@ int main(void)
 
 
 shutdown:
+
+    // HalInitiateShutdown doesn't actually cause xemu to exit.
+    Sleep(10);
+    HalWriteSMBusValue(kSMCSlaveAddress, kSMCRegisterPower, FALSE, kSMCPowerShutdown);
+
     HalInitiateShutdown();
     while (1) {
         Sleep(2000);
