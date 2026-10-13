@@ -13,6 +13,11 @@ on:
         required: false
         default: "latest"
         type: string
+      install_windows_ffmpeg:
+        description: "Install ffmpeg on Windows runner (slow)"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     branches: [master]
   push:
@@ -160,7 +165,7 @@ jobs:
 
       - name: Setup ffmpeg
         id: setup-ffmpeg
-        if: runner.os != 'macOS'
+        if: runner.os == 'Linux' || (runner.os == 'Windows' && inputs.install_windows_ffmpeg == true)
         uses: FedericoCarboni/setup-ffmpeg@v3.1
 
       - name: Setup Linux Display & Dependencies
@@ -210,14 +215,22 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           New-Item -ItemType Directory -Force -Path results
-          python -m xemutest `
-              --no-mcpx `
-              --sysram 128 `
-              --ffmpeg "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffmpeg.exe" `
-              -v `
-              assets/xemu.exe `
-              private `
-              results
+          $args = @(
+              "-m", "xemutest",
+              "--no-mcpx",
+              "--sysram", "128"
+          )
+          $ffmpegPath = "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}"
+          if ($ffmpegPath) {
+              $args += @("--ffmpeg", "$ffmpegPath/ffmpeg.exe")
+          }
+          $args += @(
+              "-v",
+              "assets/xemu.exe",
+              "private",
+              "results"
+          )
+          python @args
 
       - name: Run Tests (macOS)
         if: runner.os == 'macOS'
