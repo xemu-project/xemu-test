@@ -164,6 +164,34 @@ jobs:
           mkdir -p private
           cp assets/roswell.bin private/bios.bin
 
+      - name: Configure Crash Dumps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p "${{ github.workspace }}/crash_dumps"
+          chmod 777 "${{ github.workspace }}/crash_dumps"
+          sudo sysctl -w "kernel.core_pattern=${{ github.workspace }}/crash_dumps/core.%e.%p.%t"
+          sudo sysctl -w fs.suid_dumpable=2
+
+      - name: Configure Crash Dumps (Windows WER)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dumpDir = "${{ github.workspace }}\crash_dumps"
+          New-Item -ItemType Directory -Force -Path $dumpDir | Out-Null
+          $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\xemu.exe"
+          New-Item -Path $regPath -Force | Out-Null
+          New-ItemProperty -Path $regPath -Name "DumpFolder" -Value $dumpDir -PropertyType ExpandString -Force | Out-Null
+          New-ItemProperty -Path $regPath -Name "DumpCount" -Value 10 -PropertyType DWord -Force | Out-Null
+          New-ItemProperty -Path $regPath -Name "DumpType" -Value 2 -PropertyType DWord -Force | Out-Null
+
+      - name: Configure Crash Dumps (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p "${{ github.workspace }}/crash_dumps"
+          sudo sysctl -w kern.coredump=1 || true
+          sudo mkdir -p /cores
+          sudo chmod 1777 /cores
+
       - name: Setup ffmpeg
         id: setup-ffmpeg
         if: runner.os == 'Linux' || (runner.os == 'Windows' && inputs.install_windows_ffmpeg == true)
@@ -176,7 +204,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             xvfb libgl1-mesa-dri libgl1 libglx-mesa0 libegl1 libosmesa6 \
             libsdl2-2.0-0 libepoxy0 libpixman-1-0 libslirp0 libsamplerate0 \
-            libpipewire-0.3-0 libpcap0.8 libfuse2t64
+            libpipewire-0.3-0 libpcap0.8 libfuse2t64 gdb
 
       - name: Setup Windows Display & Dependencies (Mesa)
         if: runner.os == 'Windows'
@@ -201,6 +229,7 @@ jobs:
           MESA_LOADER_DRIVER_OVERRIDE: "llvmpipe"
           SDL_AUDIODRIVER: "dummy"
         run: |
+          ulimit -c unlimited
           mkdir -p results
           xvfb-run -s "-screen 0 640x480x24" \
               python -m xemutest \
@@ -236,6 +265,7 @@ jobs:
       - name: Run Tests (macOS)
         if: runner.os == 'macOS'
         run: |
+          ulimit -c unlimited
           mkdir -p results
           python -m xemutest \
               --no-mcpx \
@@ -244,6 +274,51 @@ jobs:
               assets/xemu.app/Contents/MacOS/xemu \
               private \
               results
+
+      - name: Collect & Inspect Crash Dumps (Linux)
+        if: always() && runner.os == 'Linux'
+        run: |
+          shopt -s nullglob
+          cores=("${{ github.workspace }}"/crash_dumps/core.*)
+          if [ ${#cores[@]} -gt 0 ]; then
+            echo "Found ${#cores[@]} core dump(s). Extracting AppImage binary for symbol/address matching..."
+            ./assets/xemu --appimage-extract >/dev/null 2>&1 || true
+            inner_bin="squashfs-root/usr/bin/xemu"
+            if [ ! -f "$inner_bin" ]; then
+              inner_bin=$(find squashfs-root -type f -name "xemu*" -executable | head -n 1)
+            fi
+            if [ -n "$inner_bin" ] && [ -f "$inner_bin" ]; then
+              cp "$inner_bin" "${{ github.workspace }}/crash_dumps/xemu-extracted"
+              for core in "${cores[@]}"; do
+                echo "=== Backtrace for $core ==="
+                gdb -batch \
+                  -ex "info registers" \
+                  -ex "x/10i \$pc-16" \
+                  -ex "thread apply all bt" \
+                  "$inner_bin" "$core" || true
+              done
+            fi
+            rm -rf squashfs-root
+          fi
+
+      - name: Collect Crash Dumps (macOS)
+        if: always() && runner.os == 'macOS'
+        run: |
+          shopt -s nullglob
+          for f in /cores/core.* "$HOME/Library/Logs/DiagnosticReports"/xemu* /Library/Logs/DiagnosticReports/xemu*; do
+            if [ -f "$f" ]; then
+              cp "$f" "${{ github.workspace }}/crash_dumps/" || true
+            fi
+          done
+
+      - name: Upload Crash Dumps
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: crash-dumps-${{ matrix.os }}
+          path: crash_dumps
+          if-no-files-found: ignore
+          retention-days: 5
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
