@@ -4,8 +4,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-from .env import Environment
-
+from xemutest.env import Environment
 
 log = logging.getLogger(__name__)
 

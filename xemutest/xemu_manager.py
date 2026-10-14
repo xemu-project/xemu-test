@@ -7,9 +7,9 @@ from pathlib import Path
 if platform.system() == "Windows":
     import pywinauto.application
 
-from .env import Environment
-from .video_capture import VideoCapture
-
+from xemutest.env import Environment
+from xemutest.errors import XemuWindowNotFoundError
+from xemutest.video_capture import VideoCapture
 
 log = logging.getLogger(__name__)
 
@@ -18,10 +18,7 @@ class XemuManager:
     """Manages xemu process lifecycle and configuration."""
 
     def __init__(
-        self,
-        test_env: Environment,
-        hdd_path: Path,
-        timeout_seconds: int = 60
+        self, test_env: Environment, hdd_path: Path, timeout_seconds: int = 60
     ):
         self.test_env = test_env
         self.config_path = Path("xemu.toml")
@@ -73,7 +70,6 @@ flashrom_path = '{self.flash_path}'
 hdd_path = '{self.hdd_path}'
 """
 
-
     def launch(self, log_file):
         """Launch xemu and wait for it to complete or timeout."""
         self.config_path.write_text(self.config)
@@ -92,7 +88,7 @@ hdd_path = '{self.hdd_path}'
                 self.app.connect(process=xemu.pid)
                 main_window = self.app.window(title_re=r"^xemu \| v.+")
                 if main_window is None:
-                    raise Exception("Failed to find main xemu window...")
+                    raise XemuWindowNotFoundError
 
                 target_width = 640
                 target_height = 480

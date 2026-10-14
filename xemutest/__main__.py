@@ -5,8 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
-from xemutest import Environment, TestBase
-from xemutest import ci
+from xemutest import Environment, TestBase, ci
 from xemutest.test_base import TestResult, TestStatus
 
 log = logging.getLogger(__name__)
@@ -25,7 +24,9 @@ def main():
         action="store_true",
         help="Suppress the requirement for an MCPX boot ROM (e.g. when using Roswell BIOS)",
     )
-    ap.add_argument("--sysram", type=int, default=64, choices=[64, 128], help="Guest RAM size")
+    ap.add_argument(
+        "--sysram", type=int, default=64, choices=[64, 128], help="Guest RAM size"
+    )
     ap.add_argument(
         "-v", "--verbose", action="store_true", help="Print verbose logging information"
     )
@@ -45,7 +46,6 @@ def main():
         Path(args.data).expanduser().resolve() if args.data else (this_dir / "data")
     )
     ffmpeg_path = Path(args.ffmpeg).expanduser().resolve() if args.ffmpeg else None
-
 
     # Validate required paths
     errors = []
@@ -88,7 +88,7 @@ def main():
         xemu_path,
         ffmpeg_path,
         require_mcpx=not args.no_mcpx,
-        sysram=args.sysram
+        sysram=args.sysram,
     )
 
     test_results_summary: dict[str, TestResult] = {}
@@ -157,7 +157,7 @@ def main():
         summary.add_table(headers=["Test", "Status", "Duration", "Details"], rows=rows)
         summary.write()
 
-    exit(0 if result else 1)
+    sys.exit(0 if result else 1)
 
 
 if __name__ == "__main__":

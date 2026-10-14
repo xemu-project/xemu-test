@@ -15,4 +15,3 @@ class Environment:
     @property
     def video_capture_enabled(self) -> bool:
         return self.ffmpeg_path is not None
-
