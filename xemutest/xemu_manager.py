@@ -68,6 +68,10 @@ mem_limit = '{self.test_env.sysram}'
 bootrom_path = '{self.mcpx_path if self.mcpx_path else ""}'
 flashrom_path = '{self.flash_path}'
 hdd_path = '{self.hdd_path}'
+
+[perf]
+hard_fpu = {"true" if self.test_env.hard_fpu else "false"}
+
 """
 
     def launch(self, log_file):
