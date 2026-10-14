@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   test:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: "!github.event.repository.fork && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')"
     runs-on: [self-hosted, windows-11]
     environment: testing
     steps:
