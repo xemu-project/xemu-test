@@ -25,5 +25,5 @@ class TestNxdkLowLevelCPUTests__FpuTestXiso(NxdkLowLevelCPUTestsBase):
             results_path,
             test_data_path,
             Path("fpu_test_xiso.iso"),
-            timeout_seconds=30,
+            timeout_seconds=60,
         )

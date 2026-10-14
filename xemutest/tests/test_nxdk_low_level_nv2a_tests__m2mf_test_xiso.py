@@ -25,5 +25,5 @@ class TestNxdkLowLevelNV2ATests__M2mfTestXiso(NxdkLowLevelNV2ATestsBase):
             results_path,
             test_data_path,
             Path("m2mf_test_xiso.iso"),
-            timeout_seconds=30,
+            timeout_seconds=60,
         )

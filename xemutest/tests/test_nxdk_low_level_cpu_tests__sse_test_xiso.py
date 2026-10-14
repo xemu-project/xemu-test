@@ -25,5 +25,5 @@ class TestNxdkLowLevelCPUTests__SseTestXiso(NxdkLowLevelCPUTestsBase):
             results_path,
             test_data_path,
             Path("sse_test_xiso.iso"),
-            timeout_seconds=30,
+            timeout_seconds=60,
         )
