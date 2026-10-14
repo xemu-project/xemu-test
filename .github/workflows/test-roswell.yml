@@ -18,13 +18,43 @@ on:
         required: false
         default: false
         type: boolean
+  # Allows other repositories (e.g., xemu) to run these tests against build
+  # artifacts produced earlier in the same workflow run. Results are reported
+  # as checks on the caller's run (and thus its PRs).
+  workflow_call:
+    inputs:
+      xemu_build_configuration:
+        description: "Configuration of the xemu build artifacts in the calling run to test (e.g. 'release', 'debug')"
+        required: false
+        default: "release"
+        type: string
+      xemu_test_repository:
+        description: "Repository containing the xemu-test sources"
+        required: false
+        default: "xemu-project/xemu-test"
+        type: string
+      xemu_test_ref:
+        description: "Git ref of xemu_test_repository to test with"
+        required: false
+        default: "master"
+        type: string
+      roswell_version:
+        description: "Roswell release version tag (e.g. 'latest', 'v0.1.0')"
+        required: false
+        default: "latest"
+        type: string
+      install_windows_ffmpeg:
+        description: "Install ffmpeg on Windows runner (slow)"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     branches: [master]
   push:
     branches: [master]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: test-roswell-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +65,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          repository: ${{ inputs.xemu_test_repository || github.repository }}
+          ref: ${{ inputs.xemu_test_ref || '' }}
           submodules: recursive
 
       - name: Setup Python
@@ -107,6 +139,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          repository: ${{ inputs.xemu_test_repository || github.repository }}
+          ref: ${{ inputs.xemu_test_ref || '' }}
           submodules: recursive
 
       - name: Download Test Data
@@ -125,6 +159,7 @@ jobs:
           pip install git+https://github.com/abaire/xemu-pgraph-ci-tools.git
 
       - name: Download Official xemu Release
+        if: ${{ !inputs.xemu_build_configuration }}
         shell: bash
         env:
           XEMU_TAG: ${{ inputs.xemu_version || 'latest' }}
@@ -151,6 +186,41 @@ jobs:
 
           print(f'Successfully prepared xemu binary at {target_path}')
           "
+
+      - name: Download xemu Build Artifact
+        if: ${{ inputs.xemu_build_configuration }}
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        with:
+          name: ${{ runner.os == 'Linux' && 'xemu-ubuntu-x86_64' || runner.os == 'Windows' && 'xemu-windows-x86_64' || 'xemu-macos-universal' }}-${{ inputs.xemu_build_configuration }}
+          path: xemu-build
+
+      - name: Prepare xemu Build Artifact
+        if: ${{ inputs.xemu_build_configuration }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          mkdir -p assets
+          case "$RUNNER_OS" in
+            Linux)
+              appimages=(xemu-build/xemu-*.AppImage)
+              if [ ${#appimages[@]} -ne 1 ]; then
+                echo "Expected exactly one AppImage, found: ${appimages[*]}"
+                exit 1
+              fi
+              mv "${appimages[0]}" assets/xemu
+              chmod +x assets/xemu
+              ;;
+            Windows)
+              cp -r xemu-build/. assets/
+              ;;
+            macOS)
+              unzip -q xemu-build/xemu-*.zip -d xemu-build/unpacked
+              mv xemu-build/unpacked/xemu.app assets/xemu.app
+              chmod +x assets/xemu.app/Contents/MacOS/xemu
+              ;;
+          esac
+          rm -rf xemu-build
 
       - name: Download Roswell BIOS
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
