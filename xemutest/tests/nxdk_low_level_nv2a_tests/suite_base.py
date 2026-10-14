@@ -142,7 +142,7 @@ class NxdkLowLevelNV2ATestsBase(XemuTestBase):
         for test in results["tests"]:
             status = _RESULT_TO_STATUS.get(test["result"], TestStatus.UNVERIFIED)
 
-            duration_str = test.get("duration", "")
+            duration_str = test.get("duration_ms", "")
             if duration_str:
                 duration_str = f"{duration_str} ms"
 
