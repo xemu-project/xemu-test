@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pyfatx import Fatx
 
+from xemutest.errors import HddSizeMismatchError
 
 log = logging.getLogger(__name__)
 
@@ -21,16 +22,14 @@ class HddManager:
         log.debug("Preparing HDD image")
         if self.hdd_path.exists():
             if self.hdd_path.stat().st_size != disk_size:
-                raise FileExistsError(
-                    "Target image path exists and is not expected size"
-                )
+                raise HddSizeMismatchError
             Fatx.format(str(self.hdd_path))
         else:
             Fatx.create(str(self.hdd_path), disk_size)
 
     def extract_files_to(self, dest: Path):
         """Mount the HDD image to the filesystem."""
-        log.debug(f"Extracting HDD image files from {self.hdd_path} to {dest}")
+        log.debug("Extracting HDD image files from %s to %s", self.hdd_path, dest)
         if dest.exists():
             shutil.rmtree(dest)
         dest.mkdir(parents=True, exist_ok=True)

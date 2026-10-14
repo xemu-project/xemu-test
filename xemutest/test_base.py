@@ -4,11 +4,11 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 
-from .env import Environment
-from .video_capture import VideoCapture
-from .hdd_manager import HddManager
-from .xemu_manager import XemuManager
-
+from xemutest.env import Environment
+from xemutest.errors import RunNotImplementedError
+from xemutest.hdd_manager import HddManager
+from xemutest.video_capture import VideoCapture
+from xemutest.xemu_manager import XemuManager
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class TestBase:
 
     def _run(self):
         """Execute the test. Should be implemented by subclass."""
-        raise NotImplementedError("Subclass must implement run() method")
+        raise RunNotImplementedError
 
     def run(self) -> TestResult:
         shutil.rmtree(self.results_path, True)
@@ -76,7 +76,6 @@ class TestBase:
 
         This method should be implemented by the subclass to confirm that the output of the test matches expectations.
         """
-        pass
 
     def add_subtest_result(
         self, name: str, status: TestStatus, message: str = "", duration: str = ""
@@ -92,13 +91,17 @@ class TestBase:
 class XemuTestBase(TestBase):
     """Test framework specifically for xemu-based tests."""
 
-    def __init__(self, test_env: Environment, results_path: Path, *, timeout_seconds: int = 60):
+    def __init__(
+        self, test_env: Environment, results_path: Path, *, timeout_seconds: int = 60
+    ):
         super().__init__(test_env, results_path)
 
         self.hdd_path = Path.cwd() / "test.img"
         self.xbox_results_path: str | None = None
         self.hdd_manager = HddManager(self.hdd_path)
-        self.xemu_manager = XemuManager(test_env, self.hdd_path, timeout_seconds=timeout_seconds)
+        self.xemu_manager = XemuManager(
+            test_env, self.hdd_path, timeout_seconds=timeout_seconds
+        )
         self.video_capture = VideoCapture(test_env, self.results_path / "capture.mp4")
         self.xemu_manager.set_video_capture(self.video_capture)
 

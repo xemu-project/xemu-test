@@ -1,18 +1,18 @@
-from . import ci
-from .env import Environment
-from .hdd_manager import HddManager
-from .test_base import TestBase, XemuTestBase, TestResult, TestStatus
-from .video_capture import VideoCapture
-from .xemu_manager import XemuManager
+from xemutest import ci
+from xemutest.env import Environment
+from xemutest.hdd_manager import HddManager
+from xemutest.test_base import TestBase, TestResult, TestStatus, XemuTestBase
+from xemutest.video_capture import VideoCapture
+from xemutest.xemu_manager import XemuManager
 
 __all__ = (
-    "ci",
     "Environment",
     "HddManager",
     "TestBase",
     "TestResult",
     "TestStatus",
-    "XemuTestBase",
     "VideoCapture",
     "XemuManager",
+    "XemuTestBase",
+    "ci",
 )

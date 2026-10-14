@@ -25,3 +25,16 @@ include = ["xemutest*"]
 
 [tool.setuptools.package-data]
 xemutest = ["data/**/*"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# This is a test harness; asserts are expected.
+extend-ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+# ci.py prints GitHub Actions workflow commands to stdout.
+"xemutest/ci.py" = ["T201"]
+# Test modules are loaded by file name, not as a package.
+"xemutest/tests/**" = ["INP001"]
