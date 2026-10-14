@@ -11,6 +11,7 @@ class Environment:
     ffmpeg_path: Path | None = None
     require_mcpx: bool = True
     sysram: int = 64
+    hard_fpu: bool = True
 
     @property
     def video_capture_enabled(self) -> bool:

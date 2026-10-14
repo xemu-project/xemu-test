@@ -28,6 +28,11 @@ def main():
         "--sysram", type=int, default=64, choices=[64, 128], help="Guest RAM size"
     )
     ap.add_argument(
+        "--no-hard-fpu",
+        action="store_true",
+        help="Disable xemu hardware-accelerated FPU",
+    )
+    ap.add_argument(
         "--only",
         action="append",
         default=[],
@@ -99,6 +104,7 @@ def main():
         ffmpeg_path,
         require_mcpx=not args.no_mcpx,
         sysram=args.sysram,
+        hard_fpu=not args.no_hard_fpu,
     )
 
     test_results_summary: dict[str, TestResult] = {}
