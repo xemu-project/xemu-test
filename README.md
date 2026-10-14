@@ -58,3 +58,28 @@ to support running the tests natively on all platforms.
 
 See `xemutest/__main__.py` for a description of arguments that may be used to
 customize native behavior.
+
+Testing xemu Pull Requests
+--------------------------
+The `Test Roswell` workflow (`.github/workflows/test-roswell.yml`) can be called
+as a [reusable workflow](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
+from the xemu CI. In that mode it tests the xemu build artifacts produced
+earlier in the same workflow run instead of an official release, and its jobs
+are reported as checks on the xemu pull request. No secrets are needed, so pull
+requests from forks are supported.
+
+To enable it, add a job to xemu's `.github/workflows/ci.yml` that runs after
+the build:
+
+```yaml
+  roswell:
+    name: Roswell tests
+    needs: build
+    uses: xemu-project/xemu-test/.github/workflows/test-roswell.yml@master
+    with:
+      xemu_build_configuration: release  # Optional, 'release' or 'debug'.
+```
+
+The `xemu_test_repository` and `xemu_test_ref` inputs select which xemu-test
+sources are used, which is useful for testing changes to xemu-test itself from a
+fork of xemu.
