@@ -55,7 +55,7 @@ jobs:
       - name: Build test data
         run: bash ./scripts/build_test_data.sh
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - name: Build wheel
         run: uv build
       - name: Get package info
