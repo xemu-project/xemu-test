@@ -262,9 +262,9 @@ jobs:
           sudo mkdir -p /cores
           sudo chmod 1777 /cores
 
-      - name: Setup ffmpeg
+      - name: Setup ffmpeg (Windows)
         id: setup-ffmpeg
-        if: runner.os == 'Linux' || (runner.os == 'Windows' && inputs.install_windows_ffmpeg == true)
+        if: runner.os == 'Windows' && inputs.install_windows_ffmpeg == true
         uses: FedericoCarboni/setup-ffmpeg@v3.1
 
       - name: Setup Linux Display & Dependencies
@@ -274,7 +274,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             xvfb libgl1-mesa-dri libgl1 libglx-mesa0 libegl1 libosmesa6 \
             libsdl2-2.0-0 libepoxy0 libpixman-1-0 libslirp0 libsamplerate0 \
-            libpipewire-0.3-0 libpcap0.8 libfuse2t64 gdb
+            libpipewire-0.3-0 libpcap0.8 libfuse2t64 gdb ffmpeg
 
       - name: Setup Windows Display & Dependencies (Mesa)
         if: runner.os == 'Windows'
@@ -305,7 +305,7 @@ jobs:
               python -m xemutest \
                   --no-mcpx \
                   --sysram 128 \
-                  --ffmpeg "${{ steps.setup-ffmpeg.outputs.ffmpeg-path }}/ffmpeg" \
+                  --ffmpeg /usr/bin/ffmpeg \
                   --ci-summary-omit-innermost-passed-subtests \
                   -v \
                   --no-hard-fpu \
