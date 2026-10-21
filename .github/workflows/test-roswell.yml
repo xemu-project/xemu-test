@@ -314,6 +314,27 @@ jobs:
                   private \
                   results
 
+      - name: Run Tests (Linux - hardfpu)
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          MESA_LOADER_DRIVER_OVERRIDE: "llvmpipe"
+          SDL_AUDIODRIVER: "dummy"
+        run: |
+          ulimit -c unlimited
+          mkdir -p results-hardfpu
+          xvfb-run -s "-screen 0 640x480x24" \
+              python -m xemutest \
+                  --no-mcpx \
+                  --sysram 128 \
+                  --ffmpeg /usr/bin/ffmpeg \
+                  --ci-summary-omit-innermost-passed-subtests \
+                  -v \
+                  --failure-filter failure_filters/linux_roswell_softfpu.json \
+                  assets/xemu \
+                  private \
+                  results-hardfpu
+
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -404,3 +425,10 @@ jobs:
         with:
           name: results-${{ matrix.os }}
           path: results
+
+      - name: Upload results (Linux - hardfpu)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        with:
+          name: results-${{ matrix.os }}-hardfpu
+          path: results-hardfpu
