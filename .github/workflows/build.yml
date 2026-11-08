@@ -62,7 +62,7 @@ jobs:
         run: echo "TAG_NAME=wheel-$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
       - name: Publish release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v2
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.TAG_NAME }}
